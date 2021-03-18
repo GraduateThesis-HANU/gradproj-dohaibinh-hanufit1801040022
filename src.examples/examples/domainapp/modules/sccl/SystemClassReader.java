@@ -5,7 +5,7 @@ import java.util.Arrays;
 import domainapp.basics.model.config.Configuration;
 import domainapp.basics.model.config.dodm.DODMConfig;
 import domainapp.basics.util.ApplicationToolKit;
-import examples.domainapp.modules.sccl.model.SC1;
+import vn.com.courseman.software.SC1;
 
 /**
  * @overview 

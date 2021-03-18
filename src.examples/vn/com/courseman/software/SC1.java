@@ -1,4 +1,4 @@
-package examples.domainapp.modules.sccl.model;
+package vn.com.courseman.software;
 
 import domainapp.basics.core.dodm.osm.OSM;
 import domainapp.basics.model.config.Configuration.Language;
