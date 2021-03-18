@@ -19,7 +19,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/domainapp.jar"/>
 	<classpathentry kind="lib" path="lib/modules-common.jar"/>
 	<classpathentry kind="lib" path="lib/modules-mccl-core.jar"/>
 	<classpathentry kind="lib" path="lib/jdomainapplibs/derby.jar"/>
@@ -33,5 +32,6 @@
 	<classpathentry kind="lib" path="lib/jdomainapplibs/memorybasedjavacompiler.jar"/>
 	<classpathentry kind="lib" path="lib/jdomainapplibs/postgresql-9.2-jdbc4.jar"/>
 	<classpathentry kind="lib" path="lib/jdomainapplibs/scrollabledesktop.jar"/>
+	<classpathentry kind="lib" path="lib/domainapp.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

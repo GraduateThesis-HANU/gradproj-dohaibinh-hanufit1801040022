@@ -24,8 +24,10 @@ import domainapp.basics.util.Tuple;
 @DClass(schema = "courseman")
 public class Student {
 
+    public static final String A_id = "id";
+
     /*** STATE SPACE **/
-    @DAttr(name = "id", type = Type.Integer, id = true, auto = true, mutable = false, optional = false, min = 1.0)
+    @DAttr(name = A_id, type = Type.Integer, id = true, auto = true, mutable = false, optional = false, min = 1.0)
     private int id;
 
     @DAttr(name = "name", type = Type.String, length = 30, optional = false)
@@ -43,13 +45,13 @@ public class Student {
     private static int idCounter;
 
     @DOpt(type = DOpt.Type.Getter)
-    @AttrRef(value = "id")
+    @AttrRef(value = A_id)
     public int getId() {
         return this.id;
     }
 
     @DOpt(type = DOpt.Type.AutoAttributeValueGen)
-    @AttrRef(value = "id")
+    @AttrRef(value = A_id)
     private static int genId(Integer id) {
         Integer val;
         if (id == null) {
@@ -193,7 +195,7 @@ public class Student {
     @DOpt(type = DOpt.Type.AutoAttributeValueSynchroniser)
     public static void synchWithSource(DAttr attrib, Tuple derivingValue, Object minVal, Object maxVal) throws ConstraintViolationException {
         String attribName = attrib.name();
-        if (attribName.equals("id")) {
+        if (attribName.equals(A_id)) {
             int maxIdVal = (Integer) maxVal;
             if (maxIdVal > idCounter)
                 idCounter = maxIdVal;
