@@ -10,6 +10,7 @@ Involves **3 entities**:
 2. web server (SRV): process request R from CLI1 (supposedly does some processing with it) and logs an update on a queue to be sent to CLI2
 3. web client 2 (CLI2): sends a socket request to SRV (with its id) asking for an update. SRV responses with update request (U) matching the id.
 
-
+## References: 
+[helidon example](https://helidon.io/docs/v2/#/se/websocket/01_overview)
 
 
