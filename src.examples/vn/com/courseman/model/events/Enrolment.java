@@ -9,6 +9,7 @@ import domainapp.basics.model.meta.DClass;
 import domainapp.basics.model.meta.DOpt;
 import domainapp.basics.util.Tuple;
 import domainapp.basics.util.events.ChangeEventSource;
+import domainapp.modules.domevents.CMEventType;
 import domainapp.modules.domevents.Publisher;
 
 /**
@@ -43,7 +44,7 @@ public class Enrolment implements Comparable, Serializable, Publisher {
   
   // 
   /**publish/subscribe pattern: event source object that encapsulates this */
-  private static ChangeEventSource evtSrc;
+  private ChangeEventSource evtSrc;
 
   // constructor method
   public Enrolment(Student s, Module m) {

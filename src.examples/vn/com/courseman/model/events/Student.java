@@ -16,6 +16,7 @@ import domainapp.basics.model.meta.DClass;
 import domainapp.basics.model.meta.DOpt;
 import domainapp.basics.util.Tuple;
 import domainapp.basics.util.events.ChangeEventSource;
+import domainapp.modules.domevents.CMEventType;
 import domainapp.modules.domevents.EventType;
 import domainapp.modules.domevents.Subscriber;
 import vn.com.courseman.model.basic.City;
