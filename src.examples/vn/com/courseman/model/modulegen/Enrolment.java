@@ -1,4 +1,4 @@
-package vn.com.courseman.model;
+package vn.com.courseman.model.modulegen;
 
 import domainapp.basics.model.meta.DAssoc;
 import domainapp.basics.model.meta.DAssoc.AssocEndType;

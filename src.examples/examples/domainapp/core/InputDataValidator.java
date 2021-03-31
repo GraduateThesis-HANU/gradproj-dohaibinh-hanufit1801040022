@@ -10,7 +10,8 @@ import domainapp.basics.exceptions.NotPossibleException;
 import domainapp.basics.model.config.Configuration;
 import domainapp.basics.model.meta.DAttr;
 import domainapp.basics.util.ApplicationToolKit;
-import vn.com.courseman.model.Student;
+import vn.com.courseman.model.basic.Enrolment;
+import vn.com.courseman.model.basic.Student;
 
 /**
  * @overview 
@@ -30,7 +31,7 @@ public class InputDataValidator {
     DODMBasic dodm = DODMBasic.getInstance(config);
     
     // register domain class
-    Class<Student> domainCls = Student.class;
+    Class<Enrolment> domainCls = Enrolment.class;
     try {
       dodm.addClass(domainCls);
     } catch (NotPossibleException | NotFoundException | DataSourceException e) {
@@ -39,11 +40,11 @@ public class InputDataValidator {
     }
       
     // create default data validator instance
-    DataValidator<Student> validator = ControllerTk.getDomainSpecificDataValidator(dodm, domainCls);
+    DataValidator<Enrolment> validator = ControllerTk.getDomainSpecificDataValidator(dodm, domainCls);
     System.out.printf("Created validator: %s%n", validator);
     
     // test input
-    DAttr attrId = dodm.getDsm().getDomainConstraint(domainCls, Student.A_id);
+    DAttr attrId = dodm.getDsm().getDomainConstraint(domainCls, Enrolment.A_id);
     int[] ids = {
         // invalid
         -2,0

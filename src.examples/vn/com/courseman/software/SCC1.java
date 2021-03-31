@@ -18,5 +18,5 @@ import vn.com.courseman.modules.ModuleMain;
 modules = { ModuleMain.class, ModuleAddress.class }, 
 sysModules = {}, setUpDesc = @SysSetUpDesc(setUpConfigType = SetUpConfig.class), 
 securityDesc = @SecurityDesc(isEnabled = false))
-public class SC1 {
+public class SCC1 {
 }

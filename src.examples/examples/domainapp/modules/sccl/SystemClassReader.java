@@ -5,7 +5,7 @@ import java.util.Arrays;
 import domainapp.basics.model.config.Configuration;
 import domainapp.basics.model.config.dodm.DODMConfig;
 import domainapp.basics.util.ApplicationToolKit;
-import vn.com.courseman.software.SC1;
+import vn.com.courseman.software.SCC1;
 
 /**
  * @overview 
@@ -16,7 +16,7 @@ import vn.com.courseman.software.SC1;
  */
 public class SystemClassReader {
   public static void main(String[] args) {
-    Class sysClass = SC1.class;
+    Class sysClass = SCC1.class;
     
     // initial config
     Configuration initCfg = ApplicationToolKit.parseInitApplicationConfiguration(sysClass);

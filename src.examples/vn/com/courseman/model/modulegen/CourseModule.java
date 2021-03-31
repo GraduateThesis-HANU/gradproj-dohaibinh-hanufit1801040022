@@ -1,4 +1,4 @@
-package vn.com.courseman.model;
+package vn.com.courseman.model.modulegen;
 
 import java.util.Collection;
 import domainapp.basics.model.meta.DAssoc;
