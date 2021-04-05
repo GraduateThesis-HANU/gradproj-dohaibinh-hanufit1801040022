@@ -11,8 +11,8 @@ import domainapp.model.meta.app.SecurityDesc;
 import domainapp.model.meta.app.SysSetUpDesc;
 import domainapp.model.meta.app.SystemDesc;
 import domainapp.setup.SetUpConfig;
-import vn.com.courseman.modules.ModuleAddress;
-import vn.com.courseman.modules.ModuleMain;
+import vn.com.courseman.modules.simple.ModuleAddress;
+import vn.com.courseman.modules.simple.ModuleMain;
 
 @SystemDesc(appName = "Courseman", splashScreenLogo = "coursemanapplogo.jpg", language = Language.English, orgDesc = @OrgDesc(name = "Faculty of IT", address = "K1m9 Nguyen Trai Street, Thanh Xuan District", logo = "hanu.gif", url = "http://localhost:5432/domains"), dsDesc = @DSDesc(type = "postgresql", dsUrl = "http://localhost:5432/domains", user = "admin", password = "password", dsmType = DSM.class, domType = DOM.class, osmType = OSM.class, connType = ConnectionType.Client), 
 modules = { ModuleMain.class, ModuleAddress.class }, 

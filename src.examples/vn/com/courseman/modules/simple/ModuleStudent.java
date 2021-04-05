@@ -1,4 +1,4 @@
-package vn.com.courseman.modules;
+package vn.com.courseman.modules.simple;
 
 import java.util.Collection;
 

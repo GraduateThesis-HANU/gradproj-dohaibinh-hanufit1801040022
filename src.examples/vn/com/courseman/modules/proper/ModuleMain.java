@@ -1,4 +1,4 @@
-package vn.com.courseman.modules;
+package vn.com.courseman.modules.proper;
 
 import static domainapp.basics.model.config.view.Region.RegionName.Add;
 import domainapp.basics.core.View;

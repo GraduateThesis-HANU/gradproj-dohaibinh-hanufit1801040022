@@ -1,4 +1,4 @@
-package vn.com.courseman.modules;
+package vn.com.courseman.modules.simple;
 
 import domainapp.basics.model.meta.module.ModuleDescriptor;
 import domainapp.basics.model.meta.module.view.AttributeDesc;
