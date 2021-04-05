@@ -1,4 +1,4 @@
-package vn.com.courseman.model.modulegen;
+package vn.com.courseman.modules.simple.address.model;
 
 import domainapp.basics.model.meta.DAssoc;
 import domainapp.basics.model.meta.DAssoc.AssocEndType;
@@ -12,6 +12,7 @@ import domainapp.basics.model.meta.DOpt;
 import domainapp.basics.model.meta.AttrRef;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.util.Tuple;
+import vn.com.courseman.modules.simple.student.model.Student;
 
 /**
  * @overview 

@@ -1,4 +1,4 @@
-package vn.com.courseman.model.modulegen;
+package vn.com.courseman.modules.simple.coursemodule.model;
 import domainapp.basics.model.meta.DClass;
 import domainapp.basics.model.meta.DAttr;
 import domainapp.basics.model.meta.DAttr.Type;

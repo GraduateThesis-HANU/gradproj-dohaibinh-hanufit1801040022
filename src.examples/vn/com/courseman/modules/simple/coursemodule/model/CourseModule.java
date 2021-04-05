@@ -1,4 +1,4 @@
-package vn.com.courseman.model.modulegen;
+package vn.com.courseman.modules.simple.coursemodule.model;
 
 import java.util.Collection;
 import domainapp.basics.model.meta.DAssoc;
@@ -8,50 +8,55 @@ import domainapp.basics.model.meta.DAssoc.Associate;
 import domainapp.basics.model.meta.DAttr;
 import domainapp.basics.model.meta.DAttr.Type;
 import domainapp.basics.model.meta.DClass;
+import domainapp.basics.model.meta.MetaConstants;
 import domainapp.basics.model.meta.Select;
 import java.util.*;
 import domainapp.basics.model.meta.DOpt;
 import domainapp.basics.model.meta.AttrRef;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.util.Tuple;
+import vn.com.courseman.modules.simple.enrolment.model.Enrolment;
 
 /**
- * Represents a student.
- * 
+ * Represents a course module.
  * @author dmle
  * @version 2.0
  */
 @DClass(schema = "courseman")
-public class Student {
-
-    public static final String A_id = "id";
+public class CourseModule {
 
     /*** STATE SPACE **/
-    @DAttr(name = A_id, type = Type.Integer, id = true, auto = true, mutable = false, optional = false, min = 1.0)
+    @DAttr(name = "id", type = Type.Integer, id = true, auto = true, mutable = false, optional = false, min = 1)
     private int id;
+
+    @DAttr(name = "code", type = Type.String, length = 6, auto = true, mutable = false, optional = false, derivedFrom = { "semester" })
+    private String code;
 
     @DAttr(name = "name", type = Type.String, length = 30, optional = false)
     private String name;
 
-    @DAttr(name = "address", type = Type.Domain, length = 20, optional = true)
-    @DAssoc(ascName = "student-has-address", role = "student", ascType = AssocType.One2One, endType = AssocEndType.One, associate = @Associate(type = Address.class, cardMin = 1, cardMax = 1))
-    private Address address;
+    @DAttr(name = "semester", type = Type.Integer, optional = false, min = 1, max = 10)
+    private int semester;
 
+    @DAttr(name = "credits", type = Type.Integer, optional = false, min = 1, max = 5)
+    private int credits;
+
+    // v2.6.4b: added support for this association
     @DAttr(name = "enrolments", type = Type.Collection, optional = false, serialisable = false, filter = @Select(clazz = Enrolment.class))
-    @DAssoc(ascName = "std-has-enrols", role = "student", ascType = AssocType.One2Many, endType = AssocEndType.One, associate = @Associate(type = Enrolment.class, cardMin = 0, cardMax = 30))
+    @DAssoc(ascName = "mod-has-enrols", role = "module", ascType = AssocType.One2Many, endType = AssocEndType.One, associate = @Associate(type = Enrolment.class, cardMin = 0, cardMax = MetaConstants.CARD_MORE))
     private Collection<Enrolment> enrolments;
 
     /*** BEHAVIOUR SPACE **/
     private static int idCounter;
 
     @DOpt(type = DOpt.Type.Getter)
-    @AttrRef(value = A_id)
+    @AttrRef(value = "id")
     public int getId() {
         return this.id;
     }
 
     @DOpt(type = DOpt.Type.AutoAttributeValueGen)
-    @AttrRef(value = A_id)
+    @AttrRef(value = "id")
     private static int genId(Integer id) {
         Integer val;
         if (id == null) {
@@ -67,6 +72,19 @@ public class Student {
     }
 
     @DOpt(type = DOpt.Type.Getter)
+    @AttrRef(value = "code")
+    public String getCode() {
+        return this.code;
+    }
+
+    @DOpt(type = DOpt.Type.AutoAttributeValueGen)
+    @AttrRef(value = "code")
+    private static String genCode(String code, Integer semester) {
+        //TODO: implement this 
+        return null;
+    }
+
+    @DOpt(type = DOpt.Type.Getter)
     @AttrRef(value = "name")
     public String getName() {
         return this.name;
@@ -79,22 +97,27 @@ public class Student {
     }
 
     @DOpt(type = DOpt.Type.Getter)
-    @AttrRef(value = "address")
-    public Address getAddress() {
-        return this.address;
+    @AttrRef(value = "semester")
+    public int getSemester() {
+        return this.semester;
     }
 
     @DOpt(type = DOpt.Type.Setter)
-    @AttrRef(value = "address")
-    public void setAddress(Address address) {
-        this.address = address;
+    @AttrRef(value = "semester")
+    public void setSemester(int semester) {
+        this.semester = semester;
     }
 
-    @DOpt(type = DOpt.Type.LinkAdderNew)
-    @AttrRef(value = "address")
-    public boolean setNewAddress(Address obj) {
-        setAddress(obj);
-        return false;
+    @DOpt(type = DOpt.Type.Getter)
+    @AttrRef(value = "credits")
+    public int getCredits() {
+        return this.credits;
+    }
+
+    @DOpt(type = DOpt.Type.Setter)
+    @AttrRef(value = "credits")
+    public void setCredits(int credits) {
+        this.credits = credits;
     }
 
     @DOpt(type = DOpt.Type.Getter)
@@ -169,36 +192,35 @@ public class Student {
     }
 
     @DOpt(type = DOpt.Type.DataSourceConstructor)
-    public Student(Integer id, String name, Address address) throws ConstraintViolationException {
+    public CourseModule(Integer id, String code, String name, Integer semester, Integer credits) throws ConstraintViolationException {
         this.id = genId(id);
+        this.code = genCode(code, semester);
         this.name = name;
-        this.address = address;
+        this.semester = semester;
+        this.credits = credits;
         this.enrolments = new ArrayList();
     }
 
     @DOpt(type = DOpt.Type.ObjectFormConstructor)
-    public Student(String name, Address address) throws ConstraintViolationException {
-        this.id = genId(null);
-        this.name = name;
-        this.address = address;
-        this.enrolments = new ArrayList();
-    }
-
     @DOpt(type = DOpt.Type.RequiredConstructor)
-    public Student(String name) throws ConstraintViolationException {
+    public CourseModule(String name, Integer semester, Integer credits) throws ConstraintViolationException {
         this.id = genId(null);
+        this.code = genCode(null, semester);
         this.name = name;
-        this.address = null;
+        this.semester = semester;
+        this.credits = credits;
         this.enrolments = new ArrayList();
     }
 
     @DOpt(type = DOpt.Type.AutoAttributeValueSynchroniser)
     public static void synchWithSource(DAttr attrib, Tuple derivingValue, Object minVal, Object maxVal) throws ConstraintViolationException {
         String attribName = attrib.name();
-        if (attribName.equals(A_id)) {
+        if (attribName.equals("id")) {
             int maxIdVal = (Integer) maxVal;
             if (maxIdVal > idCounter)
                 idCounter = maxIdVal;
+        } else if (attribName.equals("code")) {
+        //TODO: implement this 
         }
     }
 }

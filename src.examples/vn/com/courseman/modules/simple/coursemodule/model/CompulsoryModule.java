@@ -1,4 +1,4 @@
-package vn.com.courseman.model.modulegen;
+package vn.com.courseman.modules.simple.coursemodule.model;
 
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.DClass;
