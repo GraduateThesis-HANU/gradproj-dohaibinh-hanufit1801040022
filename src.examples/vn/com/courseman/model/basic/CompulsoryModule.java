@@ -10,8 +10,9 @@ import domainapp.basics.model.meta.DClass;
  * 
  */
 @DClass(schema="test_basic")
-public class CompulsoryModule extends Module {
+public class CompulsoryModule extends CourseModule {
 
+  public CompulsoryModule() {}
   // constructor method
   // the order of the arguments must be this: 
   // - super-class arguments first, then sub-class
@@ -25,7 +26,7 @@ public class CompulsoryModule extends Module {
     this(null, null, name, semester, credits);
   }
 
-  public CompulsoryModule(Integer id, String code, String name, Integer semester, Integer credits) 
+  public CompulsoryModule(Integer id, String code, String name, Integer semester, Integer credits)
     throws ConstraintViolationException {
     super(id, code, name, semester, credits);
   }

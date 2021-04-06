@@ -61,6 +61,10 @@ public class Student implements Serializable {
       ascType=AssocType.One2Many,endType=AssocEndType.Many,
       associate=@Associate(type=SClass.class,cardMin=0,cardMax=1))
   private SClass sclass;
+
+  public Student() {
+    this.id = nextID(null);
+  }
   
   // constructor method
   // without class

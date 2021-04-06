@@ -4,6 +4,25 @@
   <artifactId>WebAppGenerator</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>Service-based Web application Generator</name>
+
+    <!-- SPRING PARENT POM -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.4.2</version>
+        <relativePath/>
+    </parent>
+    <!-- END: SPRING PARENT POM -->
+
+    <!-- PROPERTIES -->
+    <properties>
+        <java.version>15</java.version>
+        <jersey.version>3.0.1</jersey.version>
+        <!--    <jetty.version>11.0.1</jetty.version>-->
+        <jetty.version>9.4.38.v20210224</jetty.version>
+    </properties>
+    <!-- END: PROPERTIES -->
+
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
@@ -32,6 +51,109 @@
   </dependencyManagement>
 
   <dependencies>
+      <!-- SPRING BOOT -->
+      <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-websocket</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-web</artifactId>
+          <exclusions>
+              <exclusion>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-starter-tomcat</artifactId>
+              </exclusion>
+          </exclusions>
+      </dependency>
+      <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-jetty</artifactId>
+      </dependency>
+      <!-- END: SPRING BOOT -->
+
+      <!-- JETTY -->
+      <dependency>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-servlet</artifactId>
+          <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-server</artifactId>
+          <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.jetty.websocket</groupId>
+          <artifactId>websocket-servlet</artifactId>
+          <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-http</artifactId>
+          <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-util</artifactId>
+          <version>${jetty.version}</version>
+      </dependency>
+      <!-- END: JETTY -->
+
+      <!-- JERSEY/JAXRS -->
+      <dependency>
+          <groupId>org.glassfish.jersey.media</groupId>
+          <artifactId>jersey-media-json-jackson</artifactId>
+          <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.glassfish</groupId>
+          <artifactId>javax.xml.bind</artifactId>
+          <version>10.0-b28</version>
+      </dependency>
+      <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-jetty-http</artifactId>
+          <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.glassfish.jersey.core</groupId>
+          <artifactId>jersey-server</artifactId>
+          <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet</artifactId>
+          <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.glassfish.jersey.bundles</groupId>
+          <artifactId>jaxrs-ri</artifactId>
+          <version>${jersey.version}</version>
+      </dependency>
+      <!-- END: JERSEY/JAXRS -->
+
+      <!-- BYTEBUDDY -->
+      <dependency>
+          <groupId>net.bytebuddy</groupId>
+          <artifactId>byte-buddy-agent</artifactId>
+          <version>1.10.20</version>
+      </dependency>
+      <dependency>
+          <groupId>net.bytebuddy</groupId>
+          <artifactId>byte-buddy-dep</artifactId>
+          <version>1.10.20</version>
+      </dependency>
+      <!-- END: BYTEBUDDY -->
+
+      <!-- TEXT MANIPULATION -->
+      <dependency>
+          <groupId>org.modeshape</groupId>
+          <artifactId>modeshape-common</artifactId>
+          <version>5.4.1.Final</version>
+      </dependency>
+      <!-- END: MODESHAPE -->
+
     <!-- WEB SERVER -->
 		<dependency>
 		  <groupId>io.helidon.webserver</groupId>
@@ -46,6 +168,60 @@
 	        <artifactId>helidon-config-yaml</artifactId>
 	    </dependency>
       <!-- END: web server -->
+
+      <!-- DOMAINAPP -->
+      <dependency>
+          <groupId>domainapp</groupId>
+          <artifactId>domainapp</artifactId>
+          <version>5.2</version>
+      </dependency>
+      <dependency>
+          <groupId>domainapp</groupId>
+          <artifactId>domainapp-mccl</artifactId>
+          <version>5.2</version>
+      </dependency>
+      <dependency>
+          <groupId>domainapp</groupId>
+          <artifactId>domainapp-commons</artifactId>
+          <version>5.2</version>
+      </dependency>
+      <!-- END: DOMAINAPP -->
+
+      <!-- Derby DB for jDomainApp -->
+      <dependency>
+          <groupId>org.apache.derby</groupId>
+          <artifactId>derbyclient</artifactId>
+          <version>10.15.2.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.apache.derby</groupId>
+          <artifactId>derby</artifactId>
+          <version>10.15.2.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.apache.derby</groupId>
+          <artifactId>derbynet</artifactId>
+          <version>10.15.2.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.apache.derby</groupId>
+          <artifactId>derbytools</artifactId>
+          <version>10.15.2.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.apache.derby</groupId>
+          <artifactId>derbyshared</artifactId>
+          <version>10.15.2.0</version>
+      </dependency>
+      <!-- END: DERBY DB -->
+
+      <!-- JAVAPARSER -->
+      <dependency>
+          <groupId>com.github.javaparser</groupId>
+          <artifactId>javaparser-core</artifactId>
+          <version>3.8.2</version>
+      </dependency>
+      <!-- END: JAVAPARSER -->
 	    
 	<!-- WEB SOCKET -->
     <dependency>
@@ -61,7 +237,8 @@
         <artifactId>helidon-webclient</artifactId>
     </dependency>
    	<!-- END: web socket -->
-	<!-- JSON -->
+
+      <!-- JSON -->
 	<dependency>
 	  <groupId>com.google.code.gson</groupId>
 	  <artifactId>gson</artifactId>

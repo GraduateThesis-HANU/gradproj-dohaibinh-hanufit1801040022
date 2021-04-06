@@ -10,7 +10,8 @@ import vn.com.courseman.model.events.Module;
  *
  */
 @DClass(schema="test_basic")
-public class ElectiveModule extends Module {
+public class ElectiveModule extends CourseModule {
+  public ElectiveModule() {}
   // extra attribute of elective module
   @DAttr(name="deptName",type=Type.String,length=50,optional=false)
   private String deptName;

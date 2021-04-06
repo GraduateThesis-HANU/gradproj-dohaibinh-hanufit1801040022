@@ -21,6 +21,7 @@ import domainapp.basics.util.Tuple;
  */
 @DClass(schema="test_basic")
 public class City {
+  public City() {}
   @DAttr(name="id",id=true,auto=true,length=3,mutable=false,optional=false,type=Type.Integer)
   private int id;
   private static int idCounter;

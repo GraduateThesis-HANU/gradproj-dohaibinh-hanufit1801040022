@@ -37,6 +37,10 @@ public class SClass {
       ascType=AssocType.One2Many,endType=AssocEndType.One,
       associate=@Associate(type=Student.class,cardMin=1,cardMax=30))  
   private List<Student> students;
+
+  public SClass() {
+    this.id = nextID(null);
+  }
   
   // create objects directly from code
   public SClass(String name) {

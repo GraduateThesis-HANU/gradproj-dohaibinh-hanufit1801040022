@@ -29,6 +29,7 @@ import vn.com.courseman.modules.simple.student.model.Student;
  */
 @DClass(schema = "courseman")
 public class Address {
+    public Address() {}
 
     /*** STATE SPACE **/
     @DAttr(name = "id", id = true, auto = true, length = 3, mutable = false, optional = false, type = Type.Integer)
