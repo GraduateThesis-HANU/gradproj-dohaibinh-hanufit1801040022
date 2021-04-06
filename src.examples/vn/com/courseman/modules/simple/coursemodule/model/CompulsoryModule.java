@@ -11,7 +11,7 @@ import vn.com.courseman.model.events.Module;
  * 
  */
 @DClass(schema="test_basic")
-public class CompulsoryModule extends Module {
+public class CompulsoryModule extends CourseModule {
 
   // constructor method
   // the order of the arguments must be this: 

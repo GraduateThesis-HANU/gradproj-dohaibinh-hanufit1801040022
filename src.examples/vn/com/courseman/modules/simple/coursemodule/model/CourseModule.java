@@ -24,6 +24,7 @@ import vn.com.courseman.modules.simple.enrolment.model.Enrolment;
  */
 @DClass(schema = "courseman")
 public class CourseModule {
+    public CourseModule() {}
 
     /*** STATE SPACE **/
     @DAttr(name = "id", type = Type.Integer, id = true, auto = true, mutable = false, optional = false, min = 1)

@@ -23,6 +23,7 @@ import vn.com.courseman.modules.simple.student.model.Student;
  */
 @DClass(schema = "courseman")
 public class Enrolment {
+    public Enrolment() {}
 
     /*** STATE SPACE **/
     // attributes

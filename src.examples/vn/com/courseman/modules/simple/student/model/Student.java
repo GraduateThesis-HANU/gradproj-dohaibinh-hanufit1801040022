@@ -26,6 +26,8 @@ import vn.com.courseman.modules.simple.enrolment.model.Enrolment;
 @DClass(schema = "courseman")
 public class Student {
 
+    public Student() {}
+
     public static final String A_id = "id";
 
     /*** STATE SPACE **/

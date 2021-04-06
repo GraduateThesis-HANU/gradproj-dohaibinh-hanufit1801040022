@@ -29,7 +29,7 @@ public class Enrolment implements Comparable, Serializable {
   @DAttr(name = "student", type = Type.Domain, length = 5, optional = false)
   private Student student;
   @DAttr(name = "module", type = Type.Domain, length = 5, optional = false)
-  private Module module;
+  private CourseModule courseModule;
   @DAttr(name = "internalMark", type = Type.Double, length = 4, optional = false, min = 0.0)
   private double internalMark;
   @DAttr(name = "examMark", type = Type.Double, length = 4, optional = false, min = 0.0)
@@ -38,23 +38,26 @@ public class Enrolment implements Comparable, Serializable {
   @DAttr(name = "finalGrade", type = Type.Char,length = 1,auto = true,mutable = false, optional = false)
   private char finalGrade;
 
+  public Enrolment() {
+    this.id = nextID(null);
+  }
   // constructor method
-  public Enrolment(Student s, Module m) {
+  public Enrolment(Student s, CourseModule m) {
     this(null, s, m, 0.0, 0.0, null);
   }
 
-  public Enrolment(Student s, Module m, Double internalMark, Double examMark) {
+  public Enrolment(Student s, CourseModule m, Double internalMark, Double examMark) {
     this(null, s, m, internalMark, examMark, null);
   }
 
   // @version 2.0
-  public Enrolment(Integer id, Student s, Module m, Double internalMark,
-      Double examMark, 
-      // v2.7.3: not used but needed to load data from source
-      Character finalGrade) throws ConstraintViolationException {
+  public Enrolment(Integer id, Student s, CourseModule m, Double internalMark,
+                   Double examMark,
+                   // v2.7.3: not used but needed to load data from source
+                   Character finalGrade) throws ConstraintViolationException {
     this.id = nextID(id);
     this.student = s;
-    this.module = m;
+    this.courseModule = m;
     this.internalMark = internalMark.doubleValue();
     this.examMark = examMark.doubleValue();
     this.finalGrade = genGrade(internalMark, examMark);
@@ -65,8 +68,8 @@ public class Enrolment implements Comparable, Serializable {
     this.student = s;
   }
 
-  public void setModule(Module m) {
-    this.module = m;
+  public void setModule(CourseModule m) {
+    this.courseModule = m;
   }
 
   public void setInternalMark(double mark) {
@@ -89,8 +92,8 @@ public class Enrolment implements Comparable, Serializable {
     return student;
   }
 
-  public Module getModule() {
-    return module;
+  public CourseModule getModule() {
+    return courseModule;
   }
 
   public double getInternalMark() {
@@ -112,10 +115,10 @@ public class Enrolment implements Comparable, Serializable {
 
   public String toString(boolean full) {
     if (full)
-      return "Enrolment(" + student + "," + module + ")";
+      return "Enrolment(" + student + "," + courseModule + ")";
     else
       return "Enrolment(" + getId() + "," + student.getId() + ","
-          + module.getCode() + ")";
+          + courseModule.getCode() + ")";
   }
 
   // a method to compute the final grade

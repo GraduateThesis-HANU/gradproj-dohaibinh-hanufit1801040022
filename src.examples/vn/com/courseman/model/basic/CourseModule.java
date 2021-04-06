@@ -8,7 +8,6 @@ import java.util.Map;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.DClass;
 import domainapp.basics.model.meta.DAttr;
-import domainapp.basics.model.meta.AttrRef;
 import domainapp.basics.model.meta.DOpt;
 import domainapp.basics.model.meta.DAttr.Type;
 import domainapp.basics.util.Tuple;
@@ -21,7 +20,7 @@ import domainapp.basics.util.Tuple;
  * @version 2.0
  */
 @DClass(schema="test_basic")
-public abstract class Module implements Serializable {
+public abstract class CourseModule implements Serializable {
   static final long serialVersionUID = 2013L;
 
   @DAttr(name="id",id=true,auto=true,length=3,mutable=false,optional=false,type=Type.Integer)
@@ -43,8 +42,12 @@ public abstract class Module implements Serializable {
   //private static final int[] SEMESTERS = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
   private static Map<Tuple,Integer> currNums = new LinkedHashMap<Tuple,Integer>();
 
+  public CourseModule() {
+    this.id = nextID(null);
+  }
+
   // constructor method: create objects from data source
-  protected Module(Integer id, String code, String name, Integer semester, Integer credits)
+  protected CourseModule(Integer id, String code, String name, Integer semester, Integer credits)
       throws ConstraintViolationException {
     this.id = nextID(id);
     // automatically generate a code
@@ -56,13 +59,13 @@ public abstract class Module implements Serializable {
     this.credits = credits;
   }
 
-  protected Module(String name, int semester, int credits) {
+  protected CourseModule(String name, int semester, int credits) {
     this(null, null, name, semester, credits);
   }
 
   // overloading constructor to support object type values
   // @version 2.0
-  protected Module(String name, Integer semester, Integer credits) {
+  protected CourseModule(String name, Integer semester, Integer credits) {
     this(null, null, name, semester, credits);
   }
 
@@ -126,10 +129,10 @@ public abstract class Module implements Serializable {
     if (o == null)
       return false;
 
-    if (!(o instanceof Module))
+    if (!(o instanceof CourseModule))
       return false;
 
-    Module m = (Module) o;
+    CourseModule m = (CourseModule) o;
 
     return (m.code.equals(this.code));
   }
