@@ -1,4 +1,4 @@
-package vn.com.courseman.model.basic;
+package examples.domainapp.modules.webappgen.backend.services.coursemodule.model;
 
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.AttrRef;
@@ -7,26 +7,34 @@ import domainapp.basics.model.meta.DOpt;
 
 /**
  * Represents a compulsory module (a subclass of Module)
- * 
+ *
  * @author dmle
- * 
+ *
  */
-@DClass(schema="test_basic")
+@DClass(schema="courseman")
 public class CompulsoryModule extends CourseModule {
 
-  public CompulsoryModule() { super(); }
   // constructor method
-  // the order of the arguments must be this: 
+  // the order of the arguments must be this:
+  // - super-class arguments first, then sub-class
+//  @DOpt(type=DOpt.Type.ObjectFormConstructor)
+//  public CompulsoryModule(@AttrRef("name") String name,
+//      @AttrRef("semester") int semester, @AttrRef("credits") int credits) {
+//    this(null, null, name, semester, credits);
+//  }
+  private CompulsoryModule() { }
+
+  // the order of the arguments must be this:
   // - super-class arguments first, then sub-class
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
   public CompulsoryModule(@AttrRef("name") String name,
-                          @AttrRef("semester") Integer semester, @AttrRef("credits") Integer credits) {
+      @AttrRef("semester") Integer semester, @AttrRef("credits") Integer credits) {
     this(null, null, name, semester, credits);
   }
 
   @DOpt(type=DOpt.Type.DataSourceConstructor)
   public CompulsoryModule(Integer id, String code, String name, Integer semester, Integer credits)
-          throws ConstraintViolationException {
+    throws ConstraintViolationException {
     super(id, code, name, semester, credits);
   }
 

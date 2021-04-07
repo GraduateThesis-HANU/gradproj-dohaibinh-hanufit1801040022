@@ -14,7 +14,7 @@ public interface WebControllerGenerator {
             case BYTECODE:
                 return new BytecodeWebControllerGenerator((TargetType) args[0]);
             case SOURCE_CODE:
-                return new SourceCodeWebControllerGenerator((TargetType) args[0]);
+                return new SourceCodeWebControllerGenerator((TargetType) args[0], (String) args[1]);
             default:
                 throw new IllegalArgumentException();
         }

@@ -22,6 +22,10 @@ public final class NamingUtils {
                                        String suffix, Class<?>... classes) {
         List<String> classNames = Stream.of(classes)
             .map(c -> c.getSimpleName()).collect(Collectors.toList());
+        if (pkg.isEmpty()) {
+            return String.format("%s$%s%s", superClass.getSimpleName(),
+                    String.join("", classNames), suffix);
+        }
         return String.format("%s.%s$%s%s", pkg, superClass.getSimpleName(),
                             String.join("", classNames), suffix);
     }

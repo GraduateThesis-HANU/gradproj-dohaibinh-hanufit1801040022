@@ -1,7 +1,6 @@
 package examples.domainapp.modules.webappgen.backend;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import domainapp.basics.exceptions.DataSourceException;
 import domainapp.basics.exceptions.NotFoundException;
@@ -13,6 +12,12 @@ import domainapp.modules.webappgen.backend.generators.GenerationMode;
 import domainapp.modules.webappgen.backend.generators.WebServiceGenerator;
 import domainapp.software.SoftwareFactory;
 import domainapp.softwareimpl.SoftwareImpl;
+import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.CompulsoryModule;
+import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.CourseModule;
+import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.ElectiveModule;
+import examples.domainapp.modules.webappgen.backend.services.enrolment.model.Enrolment;
+import examples.domainapp.modules.webappgen.backend.services.student.model.Address;
+import examples.domainapp.modules.webappgen.backend.services.student.model.Student;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
@@ -21,10 +26,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import vn.com.courseman.model.basic.City;
-import vn.com.courseman.model.basic.CourseModule;
-import vn.com.courseman.model.basic.Enrolment;
-import vn.com.courseman.model.basic.Student;
 
 import java.text.SimpleDateFormat;
 
@@ -36,18 +37,18 @@ import static com.fasterxml.jackson.annotation.PropertyAccessor.FIELD;
  */
 @SpringBootApplication
 @ComponentScan(basePackages = {
-        "vn.com.courseman",
+        "examples.domainapp.modules.webappgen.backend.services",
         "domainapp.modules.webappgen.backend"})
 public class SpringApp {
 
     // 1. initialise the model
     static final Class<?>[] model = {
             CourseModule.class,
-//            CompulsoryModule.class,
-//            ElectiveModule.class,
+            CompulsoryModule.class,
+            ElectiveModule.class,
             Enrolment.class,
             Student.class,
-            City.class
+            Address.class
     };
 
     private static SoftwareImpl sw;
@@ -76,7 +77,6 @@ public class SpringApp {
             ctx.getBeansOfType(CrudService.class).forEach((k, v) -> {
                 registry.put(k, v);
             });
-
         });
         generator.generateWebService(model);
         System.out.println("------------");
@@ -98,13 +98,11 @@ public class SpringApp {
     }
 
     @Bean
-    public Jackson2ObjectMapperBuilderCustomizer jsonCustomizer() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new ParameterNamesModule());
-        mapper.setVisibility(FIELD, ANY);
-        return builder -> builder
-                .serializationInclusion(JsonInclude.Include.NON_NULL)
-                .dateFormat(new SimpleDateFormat("yyyy-MM-dd"))
-                .configure(mapper);
+    public Jackson2ObjectMapperBuilderCustomizer addCustomBigDecimalDeserialization() {
+        return builder -> builder.dateFormat(new SimpleDateFormat("yyyy-MM-dd"))
+                .modules(new ParameterNamesModule())
+                .visibility(FIELD, ANY)
+                .serializationInclusion(JsonInclude.Include.NON_NULL);
+                //.configure(mapper);
     }
 }

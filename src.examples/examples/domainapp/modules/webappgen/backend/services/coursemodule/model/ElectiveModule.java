@@ -1,8 +1,8 @@
-package vn.com.courseman.model.basic;
+package examples.domainapp.modules.webappgen.backend.services.coursemodule.model;
 import domainapp.basics.model.meta.AttrRef;
-import domainapp.basics.model.meta.DClass;
 import domainapp.basics.model.meta.DAttr;
 import domainapp.basics.model.meta.DAttr.Type;
+import domainapp.basics.model.meta.DClass;
 import domainapp.basics.model.meta.DOpt;
 
 /**
@@ -10,28 +10,31 @@ import domainapp.basics.model.meta.DOpt;
  * @author dmle
  *
  */
-@DClass(schema="test_basic")
+@DClass(schema="courseman")
 public class ElectiveModule extends CourseModule {
   // extra attribute of elective module
   @DAttr(name="deptName",type=Type.String,length=50,optional=false)
   private String deptName;
 
-  public ElectiveModule() { super(); }
   // constructor method
-  // the order of the arguments must be this: 
+  // the order of the arguments must be this:
   // - super-class arguments first, then sub-class
-  public ElectiveModule(String name, int semester, int credits, String deptName) {
-    this(null, null, name, semester, credits, deptName);
-  }
+//  @DOpt(type=DOpt.Type.ObjectFormConstructor)
+//  public ElectiveModule(@AttrRef("name") String name,
+//      @AttrRef("semester") int semester, @AttrRef("credits") int credits,
+//      @AttrRef("deptName") String deptName) {
+//    this(null, null, name, semester, credits, deptName);
+//  }
+//  private ElectiveModule() { }
 
   // the order of the arguments must be this:
   // - super-class arguments first, then sub-class
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
   public ElectiveModule(
-          @AttrRef("deptName") String deptName,
-          @AttrRef("name") String name,
-          @AttrRef("semester") Integer semester, @AttrRef("credits") Integer credits
-  ) {
+      @AttrRef("deptName") String deptName,
+      @AttrRef("name") String name,
+      @AttrRef("semester") Integer semester, @AttrRef("credits") Integer credits
+      ) {
     this(null, null, name, semester, credits, deptName);
   }
 
@@ -40,14 +43,14 @@ public class ElectiveModule extends CourseModule {
     super(id, code,name,semester,credits);
     this.deptName = deptName;
   }
-  
-  // setter method 
+
+  // setter method
   public void setDeptName(String deptName) {
     this.deptName = deptName;
   }
-  
+
   // getter method
   public String getDeptName() {
     return deptName;
-  }  
+  }
 }

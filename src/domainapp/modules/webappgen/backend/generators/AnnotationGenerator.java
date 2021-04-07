@@ -61,7 +61,6 @@ final class AnnotationGenerator {
             Builder<?> builder = new ByteBuddy().rebase(cls);
             final String[] ignoredFields = getIgnoredFields(defined);
             for (Field f : cls.getDeclaredFields()) {
-                if (f.isAnnotationPresent(JsonIgnoreProperties.class)) continue;
                 if (!isDefinedTypeField(f)) continue;
                 builder = builder.field(is(f))
                     .annotateField(
@@ -70,13 +69,13 @@ final class AnnotationGenerator {
                             .build());
             }
             builder.make()
-                .saveIn(saveDir);
+                  .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY);
+//                .saveIn(saveDir);
         } catch (Throwable ex) {
             ex.printStackTrace();
         }
 
         // builder.make()
-        //     .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY);
     }
 
     /**
@@ -87,15 +86,14 @@ final class AnnotationGenerator {
         List<Class<?>> subtypes = InheritanceUtils.getSubtypesOf(cls);
         if (subtypes.isEmpty()) return;
         for (Class<?> subtype : subtypes) {
-            if (subtype.isAnnotationPresent(JsonTypeName.class)) continue;
             try {
                 new ByteBuddy().decorate(subtype)
                     .annotateType(ofType(JsonTypeName.class)
                         .define("value", NamingUtils.subtypeShortNameFrom(subtype))
                         .build())
                     .make()
-                    .saveIn(saveDir);
-                // .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY);
+//                    .saveIn(saveDir);
+                    .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY);
             } catch (Throwable ex) {
 
             }
@@ -130,11 +128,12 @@ final class AnnotationGenerator {
                                 new AnnotationDescription[subtypeAnnotations.size()]))
                         .build())
                 .make()
-                .saveIn(saveDir);
+                .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY);
+            // .saveIn(saveDir);
         } catch (Throwable ex) {
 
         }
-            // .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY);
+
     }
 
     private String[] getIgnoredFields(Class<?>[] defined) {
