@@ -22,7 +22,7 @@ public interface NestedRestfulController<TOuter, TInner> {
      */
     @Create
     TInner createInner(@ID Identifier<?> outerId,
-                       @Modifying Map<String, Object> requestBody);
+                       @Modifying TInner requestBody);
 
     /**
      * Retrieve a list of inner object instances owned by the outer.

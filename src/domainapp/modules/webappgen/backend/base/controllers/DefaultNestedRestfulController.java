@@ -27,36 +27,16 @@ public abstract class DefaultNestedRestfulController<T1, T2>
     }
 
     @Override
-    public T2 createInner(Identifier<?> outerId, Map<String, Object> requestBody) {
+    public T2 createInner(Identifier<?> outerId, T2 requestBody) {
         // TODO: FIX THIS!
-        final Map<String, Object> inputs = new HashMap<>();
-        for (String key : requestBody.keySet()) {
-            String type = key.replace("Id", "");
-            Object value = getServiceOfGenericType(type)
-                    .getEntityById(new Identifier<>(requestBody.get(key)));
-            if (value == null) throw new RuntimeException();
-            inputs.put(type, value);
-        }
-
-        Constructor<?> requiredConstructor = getRequiredConstructor(innerType);
-
-        Class<?>[] parameterTypes = requiredConstructor.getParameterTypes();
-        Object[] arguments = new Object[parameterTypes.length];
-        final AtomicInteger counter = new AtomicInteger();
-        for (Class<?> paramType : parameterTypes) {
-            String paramTypeName = paramType.getSimpleName();
-            arguments[counter.get()] = inputs.get(Character.toLowerCase(paramTypeName.charAt(0)) + paramTypeName.substring(1));
-            counter.incrementAndGet();
-        }
 
         try {
-            T2 instance = (T2) requiredConstructor.newInstance(arguments);
             CrudService<T2> svc = getServiceOfGenericType(innerType.getCanonicalName());
             T1 outer = (T1) getServiceOfGenericType(outerType.getCanonicalName()).getEntityById(outerId);
-            T2 created = svc.createEntity(instance);
+            T2 created = svc.createEntity(requestBody);
             getLinkAdder(outerType, innerType).invoke(outer, created);
             return created;
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+        } catch (IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException ex) {
             throw new RuntimeException(ex);
         }

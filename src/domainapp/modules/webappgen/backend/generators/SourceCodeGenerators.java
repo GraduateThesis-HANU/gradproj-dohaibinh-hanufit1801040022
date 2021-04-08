@@ -84,7 +84,9 @@ public class SourceCodeGenerators {
                 if (parameterType == Object.class) {
                     // generic (T) type
                     parameters.add(new Parameter(
-                            JavaParser.parseClassOrInterfaceType(genericTypeName), argName
+                            JavaParser.parseClassOrInterfaceType(
+                                    genericTypes[genericTypes.length - 1].getSimpleName()),
+                            argName
                     ));
                 } else {
                     parameters.add(new Parameter(
@@ -96,7 +98,7 @@ public class SourceCodeGenerators {
             }
             Class returnType = method.getReturnType();
             methodDeclaration.setType(returnType == Object.class ?
-                    genericType : returnType);
+                    genericTypes[genericTypes.length - 1] : returnType);
             methodDeclaration.setParameters(parameters);
 
             BlockStmt body = new BlockStmt();

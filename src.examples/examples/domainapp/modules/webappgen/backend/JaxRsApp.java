@@ -49,14 +49,6 @@ public class JaxRsApp {
         Address.class
     };
 
-    static {
-        try {
-            Class.forName("com.hanu.domainfs.DummyApp");
-        } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
-        }
-    }
-
     private static SoftwareImpl sw;
 
     private static CrudService<?> createDefault(Class<CrudService> cls,
@@ -93,8 +85,10 @@ public class JaxRsApp {
         System.out.println("------------");
 
         WebServiceGenerator generator = new WebServiceGenerator(
-            TargetType.JAX_RS, GenerationMode.BYTECODE);
-        generator.setGenerateCompleteCallback(() -> {
+                TargetType.SPRING,
+                GenerationMode.SOURCE_CODE,
+                "/Users/binh_dh/Documents/generated");
+        generator.setGenerateCompleteCallback(generatedClasses -> {
             sw = SoftwareFactory.createDefaultDomSoftware();
             sw.init();
             try {

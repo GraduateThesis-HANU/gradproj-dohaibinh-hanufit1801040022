@@ -1,5 +1,7 @@
 package examples.domainapp.modules.webappgen.backend.services.enrolment.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.*;
 import domainapp.basics.model.meta.DAssoc.AssocEndType;
@@ -62,7 +64,8 @@ public class Enrolment implements Comparable {
   private Integer finalMark;
 
   // v2.6.4.b
-  private StateHistory<String, Object> stateHist;
+  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+  private final StateHistory<String, Object> stateHist;
 
   private Enrolment() {
       this.id = nextID(null);

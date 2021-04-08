@@ -3,6 +3,7 @@ package domainapp.modules.webappgen.backend.generators;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
@@ -17,6 +18,7 @@ import domainapp.modules.webappgen.backend.base.controllers.*;
 import domainapp.modules.webappgen.backend.utils.GenericTypeUtils;
 import domainapp.modules.webappgen.backend.utils.IdentifierUtils;
 import domainapp.modules.webappgen.backend.utils.NamingUtils;
+import domainapp.modules.webappgen.backend.utils.OutputPathUtils;
 import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.CourseModule;
 import examples.domainapp.modules.webappgen.backend.services.enrolment.model.Enrolment;
 import examples.domainapp.modules.webappgen.backend.services.student.model.Student;
@@ -32,7 +34,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -66,8 +67,6 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         try {
             String typeName = type.getName();
             if (!generatedCrudClasses.containsKey(typeName)) {
-                Class<?> idType = (Class<?>) GenericTypeUtils
-                        .getWrapperClass(IdentifierUtils.getIdField(type).getType());
                 generatedCrudClasses.put(typeName, generateRestfulController(type));
             }
             return (Class<RestfulController<T>>) generatedCrudClasses.get(typeName);
@@ -120,12 +119,14 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
 
     private Class saveAndReturnClass(String pkg, String name, CompilationUnit compilationUnit, ClassOrInterfaceDeclaration classDeclaration) {
         Path outputPath = Path.of(outputFolder,
+                compilationUnit.getPackageDeclaration().orElse(new PackageDeclaration()).getNameAsString().replace(".", "/"),
                 classDeclaration.getNameAsString() + ".java");
-        writeToSource(compilationUnit, outputPath);
+        OutputPathUtils.writeToSource(compilationUnit, outputPath);
         try {
-            return (Class) compiler.ignoreWarnings().compile(
-                    pkg + "." + name,
-                    compilationUnit.toString());
+            String className = name.contains(pkg) ? name : pkg.concat(".").concat(name);
+            return compiler.ignoreWarnings()
+                    .useParentClassLoader(Thread.currentThread().getContextClassLoader())
+                    .compile(className, compilationUnit.toString());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -179,19 +180,6 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
                         new MemberValuePair("value",
                                 new StringLiteralExpr(getClass().getCanonicalName()))));
         classDeclaration.addAnnotation(generatedAnnotation);
-    }
-
-    private static void writeToSource(CompilationUnit serviceCompilationUnit, Path outputPath) {
-        try {
-            if (!Files.exists(outputPath)) {
-                Files.createFile(outputPath);
-            } else {
-                Files.delete(outputPath);
-            }
-            Files.writeString(outputPath, serviceCompilationUnit.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private static AnnotationExpr from(AnnotationRep annRep) {
@@ -289,7 +277,7 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
 
 class TestSrcWebCtrlGen {
     public static void main(String[] args) {
-        WebControllerGenerator generator = new SourceCodeWebControllerGenerator("/Users/binh_dh/Documents/generated");
+            WebControllerGenerator generator = new SourceCodeWebControllerGenerator("/Users/binh_dh/Documents/generated");
         System.out.println(generator.getRestfulController(Student.class));
         System.out.println(generator.getRestfulController(CourseModule.class));
         System.out.println(generator.getNestedRestfulController(Student.class, Enrolment.class));

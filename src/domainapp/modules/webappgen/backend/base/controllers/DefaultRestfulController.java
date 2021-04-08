@@ -22,7 +22,7 @@ public abstract class DefaultRestfulController<T> implements RestfulController<T
     }
 
     protected <U> CrudService<U> getServiceOfGenericType(Class<U> cls) {
-        return ServiceRegistry.getInstance().get(cls.getName());
+        return ServiceRegistry.getInstance().get(cls.getSimpleName());
     }
 
     @Override

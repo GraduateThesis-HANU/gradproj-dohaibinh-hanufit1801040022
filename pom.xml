@@ -206,6 +206,12 @@
       </dependency>
       <!-- END: DOMAINAPP -->
 
+      <dependency>
+          <groupId>org.jooq</groupId>
+          <artifactId>joor</artifactId>
+          <version>0.9.13</version>
+      </dependency>
+
       <!-- IN-MEMORY JAVA COMPILER -->
       <dependency>
           <groupId>org.mdkt.compiler</groupId>

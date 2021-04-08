@@ -4,6 +4,7 @@ import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.Parameter;
@@ -14,6 +15,7 @@ import domainapp.modules.webappgen.backend.base.services.CrudService;
 import domainapp.modules.webappgen.backend.base.services.InheritedDomServiceAdapter;
 import domainapp.modules.webappgen.backend.base.services.SimpleDomServiceAdapter;
 import domainapp.modules.webappgen.backend.utils.InheritanceUtils;
+import domainapp.modules.webappgen.backend.utils.OutputPathUtils;
 import examples.domainapp.modules.webappgen.backend.services.student.model.Student;
 import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.CourseModule;
 import org.mdkt.compiler.InMemoryJavaCompiler;
@@ -85,12 +87,14 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
         serviceCompilationUnit.addImport(InheritanceUtils.class.getCanonicalName());
 
         Path outputPath = Path.of(outputFolder,
+                serviceCompilationUnit.getPackageDeclaration().orElse(new PackageDeclaration()).getNameAsString().replace(".", "/"),
                 serviceClassDeclaration.getNameAsString() + ".java");
-        writeToSource(serviceCompilationUnit, outputPath);
+        OutputPathUtils.writeToSource(serviceCompilationUnit, outputPath);
 
         try {
             Class generated = InMemoryJavaCompiler.newInstance()
                     .ignoreWarnings()
+                    .useParentClassLoader(Thread.currentThread().getContextClassLoader())
                     .compile(outputFQName, serviceCompilationUnit.toString());
             generatedServices.put(genericTypeName, generated);
             return generated;
@@ -153,19 +157,6 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
                         new MemberValuePair("value",
                                 new StringLiteralExpr(getClass().getCanonicalName()))));
         serviceClassDeclaration.addAnnotation(generatedAnnotation);
-    }
-
-    private static void writeToSource(CompilationUnit serviceCompilationUnit, Path outputPath) {
-        try {
-            if (!Files.exists(outputPath)) {
-                Files.createFile(outputPath);
-            } else {
-                Files.delete(outputPath);
-            }
-            Files.writeString(outputPath, serviceCompilationUnit.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
 

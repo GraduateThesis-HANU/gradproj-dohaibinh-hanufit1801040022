@@ -4,10 +4,8 @@ import domainapp.modules.webappgen.backend.utils.InheritanceUtils;
 import domainapp.modules.webappgen.backend.annotations.bridges.TargetType;
 import domainapp.modules.webappgen.backend.utils.ClassAssocUtils;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @SuppressWarnings({ "rawtypes" })
@@ -18,18 +16,21 @@ public class WebServiceGenerator {
     private final AnnotationGenerator annotationGenerator;
     private final List<Class> generatedControllerClasses;
     private final Map<String, Class> generatedServiceClasses;
-    private Runnable generateCompleteCallback;
+    private Consumer<List<Class>> generateCompleteCallback;
 
-    public WebServiceGenerator(TargetType targetType, GenerationMode generationMode) {
-        this.webControllerGenerator = WebControllerGenerator.getInstance(generationMode, targetType);
-        this.serviceTypeGenerator = ServiceTypeGenerator.getInstance(generationMode);
+    public WebServiceGenerator(
+            TargetType targetType,
+            GenerationMode generationMode,
+            String outputPath) {
+        this.webControllerGenerator = WebControllerGenerator.getInstance(generationMode, targetType, outputPath);
+        this.serviceTypeGenerator = ServiceTypeGenerator.getInstance(generationMode, outputPath);
         this.annotationGenerator = AnnotationGenerator.instance();
 
         generatedControllerClasses = new LinkedList<>();
         generatedServiceClasses = new LinkedHashMap<>();
     }
 
-    public void setGenerateCompleteCallback(Runnable generateCompleteCallback) {
+    public void setGenerateCompleteCallback(Consumer<List<Class>> generateCompleteCallback) {
         this.generateCompleteCallback = generateCompleteCallback;
     }
 
@@ -67,8 +68,9 @@ public class WebServiceGenerator {
                 generatedControllerClasses.add(__);
             }
         }
-
-        onGenerateComplete();
+        List<Class> generatedClasses = new ArrayList<>(generatedServiceClasses.values());
+        generatedClasses.addAll(generatedControllerClasses);
+        onGenerateComplete(generatedClasses);
     }
 
     /**
@@ -82,7 +84,7 @@ public class WebServiceGenerator {
                 }).orElse(List.of());
     }
 
-    private void onGenerateComplete() {
-        generateCompleteCallback.run();
+    private void onGenerateComplete(List<Class> generatedClasses) {
+        generateCompleteCallback.accept(generatedClasses);
     }
 }
