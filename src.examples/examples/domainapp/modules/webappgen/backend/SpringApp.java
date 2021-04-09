@@ -85,7 +85,7 @@ public class SpringApp {
 
         WebServiceGenerator generator = new WebServiceGenerator(
                 TargetType.SPRING,
-                GenerationMode.BYTECODE,
+                GenerationMode.SOURCE_CODE,
                 "/Users/binh_dh/Documents/generated");
         generator.setGenerateCompleteCallback(_generatedClasses -> {
             generatedClasses.addAll(_generatedClasses);
@@ -101,16 +101,14 @@ public class SpringApp {
             // populate the service registry
             final ServiceRegistry registry = ServiceRegistry.getInstance();
 
-            // TODO: REGISTER SPRING CONTROLLERS AS CONTROLLERS (NOT BEANS)
-            GenericWebApplicationContext ctx = (GenericWebApplicationContext) SpringApplication.run(SpringApp.class, args);
+            final int generatedClassesCount = generatedClasses.size();
+            Class[] primarySources = generatedClasses.toArray(
+                    new Class[generatedClassesCount + 1]);
+            primarySources[generatedClassesCount] = SpringApp.class;
 
-            for (Class cls : generatedClasses) {
-                try {
-                    ctx.registerBean(cls.getCanonicalName(), cls);
-                } catch (BeanDefinitionOverrideException ex) {
+            GenericWebApplicationContext ctx = (GenericWebApplicationContext)
+                    SpringApplication.run(primarySources, args);
 
-                }
-            }
             ctx.getBeansOfType(CrudService.class).forEach((k, v) -> registry.put(k, v));
         });
         generator.generateWebService(model);

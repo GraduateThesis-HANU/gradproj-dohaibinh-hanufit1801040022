@@ -24,7 +24,8 @@ public final class ServiceRegistry {
 
     public CrudService get(String type) {
         for (Map.Entry<String, CrudService> entry : serviceTypeMap.entrySet()) {
-            if (entry.getKey().toLowerCase(Locale.ROOT).contains(type.toLowerCase(Locale.ROOT))) {
+            if (entry.getKey().toLowerCase(Locale.ROOT)
+                    .contains(type.toLowerCase(Locale.ROOT).concat("service"))) {
                 return entry.getValue();
             }
         }
