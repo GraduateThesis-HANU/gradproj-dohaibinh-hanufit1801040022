@@ -41,20 +41,20 @@ public class Address {
   // from object form: Student is not included
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
   @DOpt(type=DOpt.Type.RequiredConstructor)
-  public Address(@AttrRef("name") String cityName) {
-    this(null, cityName, null);
+  public Address(@AttrRef("name") String name) {
+    this(null, name, null);
   }
 
   // from object form: Student is included
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
-  public Address(@AttrRef("name") String cityName, @AttrRef("student") Student student) {
-    this(null, cityName, student);
+  public Address(@AttrRef("name") String name, @AttrRef("student") Student student) {
+    this(null, name, student);
   }
 
   // from data source
   @DOpt(type=DOpt.Type.DataSourceConstructor)
-  public Address(@AttrRef("id") Integer id, @AttrRef("name") String cityName) {
-    this(id, cityName, null);
+  public Address(@AttrRef("id") Integer id, @AttrRef("name") String name) {
+    this(id, name, null);
   }
 
   private Address() {
@@ -62,9 +62,9 @@ public class Address {
   }
 
   // based constructor (used by others)
-  private Address(Integer id, String cityName, Student student) {
+  private Address(Integer id, String name, Student student) {
     this.id = nextId(id);
-    this.name = cityName;
+    this.name = name;
     this.student = student;
   }
 

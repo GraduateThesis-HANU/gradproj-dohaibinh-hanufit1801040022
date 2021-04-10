@@ -10,6 +10,9 @@ import domainapp.basics.model.meta.DAssoc.Associate;
 import domainapp.basics.model.meta.DAttr.Type;
 import domainapp.basics.util.Tuple;
 import domainapp.basics.util.cache.StateHistory;
+import domainapp.basics.util.events.ChangeEventSource;
+import domainapp.modules.domevents.CMEventType;
+import domainapp.modules.domevents.Publisher;
 import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.CourseModule;
 import examples.domainapp.modules.webappgen.backend.services.student.model.Student;
 
@@ -20,7 +23,7 @@ import examples.domainapp.modules.webappgen.backend.services.student.model.Stude
  *
  */
 @DClass(schema = "courseman")
-public class Enrolment implements Comparable {
+public class Enrolment implements Comparable, Publisher {
 
   private static final String AttributeName_InternalMark = "internalMark";
   private static final String AttributeName_ExamMark = "examMark";
@@ -67,6 +70,11 @@ public class Enrolment implements Comparable {
   @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
   private final StateHistory<String, Object> stateHist;
 
+  //
+  /**publish/subscribe pattern: event source object that encapsulates this */
+  @JsonIgnore
+  private ChangeEventSource evtSrc;
+
   private Enrolment() {
       this.id = nextID(null);
       this.stateHist = new StateHistory<>();
@@ -95,22 +103,29 @@ public class Enrolment implements Comparable {
       Double examMark,
       // v2.7.3: not used but needed to load data from source
       Character finalGrade) throws ConstraintViolationException {
-    this.id = nextID(id);
+    this();
     this.student = s;
     this.courseModule = m;
     this.internalMark = (internalMark != null) ? internalMark.doubleValue()
         : null;
     this.examMark = (examMark != null) ? examMark.doubleValue() : null;
 
-    // v2.6.4.b
-    stateHist = new StateHistory<>();
-
     updateFinalMark();
+
+    // publish/subscribe pattern
+    // register student as subscriber for add event
+    addSubscriber(student, CMEventType.values());
+
+    // fire OnCreated event
+    notify(CMEventType.OnCreated, getEventSource());
   }
 
   // setter methods
   public void setStudent(Student s) {
+    removeSubcriber(student);
     this.student = s;
+    addSubscriber(student, CMEventType.values());
+    notify(CMEventType.OnCreated, getEventSource());
   }
 
   public void setCourseModule(CourseModule m) {
@@ -290,38 +305,6 @@ public class Enrolment implements Comparable {
     }
   }
 
-  // private static int nextID(Integer currID) {
-  // if (currID == null) { // generate one
-  // idCounter++;
-  // return idCounter;
-  // } else { // update
-  // // int num = currID.intValue();
-  // //
-  // // if (num > idCounter)
-  // // idCounter=num;
-  // setIdCounter(currID);
-  //
-  // return currID;
-  // }
-  // }
-  //
-  // /**
-  // * This method is required for loading this class metadata from storage
-  // *
-  // * @requires
-  // * id != null
-  // * @effects
-  // * update <tt>idCounter</tt> from the value of <tt>id</tt>
-  // */
-  // public static void setIdCounter(Integer id) {
-  // if (id != null) {
-  // int num = id.intValue();
-  //
-  // if (num > idCounter)
-  // idCounter=num;
-  // }
-  // }
-
   // implements Comparable interface
   public int compareTo(Object o) {
     if (o == null || (!(o instanceof Enrolment)))
@@ -330,5 +313,26 @@ public class Enrolment implements Comparable {
     Enrolment e = (Enrolment) o;
 
     return this.student.getId().compareTo(e.student.getId());
+  }
+
+  @Override
+  @JsonIgnore
+  public ChangeEventSource getEventSource() {
+    if (evtSrc == null) {
+      evtSrc = createEventSource(getClass());
+    } else {
+      resetEventSource(evtSrc);
+    }
+
+    return evtSrc;
+  }
+
+  /**
+   * @effects
+   *  notify register all registered listeners
+   */
+  @Override
+  public void finalize() throws Throwable {
+    notify(CMEventType.OnRemoved, getEventSource());
   }
 }

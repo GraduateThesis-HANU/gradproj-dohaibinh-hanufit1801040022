@@ -20,7 +20,7 @@ public class ModuleAddress {
     private int id;
 
     @AttributeDesc(label = "City name")
-    private String cityName;
+    private String name;
 
     @AttributeDesc(label = "Student")
     private Student student;

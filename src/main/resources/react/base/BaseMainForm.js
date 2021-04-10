@@ -2,10 +2,13 @@ import React from "react";
 import { Button, Col, Container, Form, FormControl, Row } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import SockJS from "sockjs-client";
 import QuickScrollFab from "../common/QuickScrollFab";
-import BaseForm from "./BaseForm";
 import AutoDismissAlert from "../common/AutoDismissAlert";
 import DeleteConfirmation from "../common/DeleteConfirmation";
+import constants from "../common/Constants";
+import { StompOverWSClient } from "../common/StompClient";
+import { CustomToast, ToastWrapper } from "../common/Toasts";
 
 export default class BaseMainForm extends React.Component {
   constructor(props) {
@@ -26,6 +29,7 @@ export default class BaseMainForm extends React.Component {
     this._renderObject = this._renderObject.bind(this);
     
     this.setAlert = this.setAlert.bind(this);
+    this.resetState = this.resetState.bind(this);
     this.filterByType = this.filterByType.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.getCreateHandler = this.getCreateHandler.bind(this);
@@ -39,16 +43,63 @@ export default class BaseMainForm extends React.Component {
     this.partialApplyWithCallbacks = this.partialApplyWithCallbacks.bind(this);
   }
 
+  // lifecycle
+  componentDidMount() {
+    const socket = new SockJS(`${constants.host}/domainapp-ws`);
+    const stompClient = new StompOverWSClient(socket);
+    const self = this;
+    stompClient.register([
+      {
+        endpoint: `/topic/${this.props.mainAPI.objectNamePlural}`,
+        callback: (response) => {
+          const message = JSON.parse(response.body).content;
+          const notiList = self.state.notifications ? self.state.notifications : []
+          const index = notiList.length;
+          self.setState({
+            notifications: [
+              ...notiList,
+              <CustomToast header="Notification" timeout={100000}
+                  onClick={() => window.location.reload()}
+                  onClose={() => self.setState({
+                    notifications: self.state.notifications.splice(index, 1)
+                  })}
+                  children={message} />
+            ]
+          })
+        }
+      }
+    ]);
+  }
+
   // methods for view logic
   getPossibleTypes() { }
-  filterByType() { }
-
+  filterByType(type) {
+    if (!this.getPossibleTypes()) return;
+    this.props.mainAPI.getByPageAndType([
+      1, type,
+      result => {
+        this.setState({ current: result })}
+    ]);
+  }
+  
+  resetState() {
+    this.setState({
+      current: {
+        type: this.getPossibleTypes() ? this.getPossibleTypes()[0] : undefined
+      },
+      currentId: undefined
+    })
+  }
+  
   getCreateHandler() {
     if (this.props.parent) {
       const fn = this.partialApplyWithCallbacks(this.props.parentAPI.createInner);
       const objectNamePlural = this.props.mainAPI.objectNamePlural;
       const parentId = this.props.parentId;
+      const parentName = this.props.parentName;
+      const parentValue = this.props.parent;
       return function([data]) {
+        data[parentName] = parentValue;
         return fn([data, objectNamePlural, parentId])
       }
     } else {
@@ -63,8 +114,7 @@ export default class BaseMainForm extends React.Component {
       || !this.state.currentId || this.state.currentId === "") {
       createUsing([this.state.current]);
     } else if (this.state.viewType === "details") {
-      updateUsing([
-        this.state.currentId, this.state.current]);
+      updateUsing([this.state.currentId, this.state.current]);
     }
   }
 
@@ -167,6 +217,10 @@ export default class BaseMainForm extends React.Component {
     })
   }
   onOperationSuccess(result) {
+    if (result instanceof String) {
+      this.setAlert("danger", "Message", result);
+      return;
+    }
     const extra = result && !(result instanceof(Response)) ?
         ` Affected: ${this._renderObject(result)}!` : "";
     // update UI somewhere here
@@ -203,12 +257,17 @@ export default class BaseMainForm extends React.Component {
     return (<>
       <Col className="px-0">
         <Button className="mr-2" variant="primary"
-          onClick={() => this.handleStateChange("viewType", "create")}>Main</Button>
+          onClick={() => this.handleStateChange(
+            "viewType", "create", false, this.resetState)}>Main</Button>
         <Button className="mr-2" variant="primary"
-          onClick={() => this.handleStateChange("viewType", "browse")}>Browse</Button>
+          onClick={() => this.handleStateChange(
+            "viewType", "browse", false,
+            () => this.handleStateChange("current.type", "0"))}>Browse</Button>
         {this.state.viewType === "details"
           && this.state.currentId
-          && this.state.current !== "" ? <DeleteConfirmation /> : ""}
+          && this.state.current !== "" ? 
+          <DeleteConfirmation action={
+            () => this.partialApplyWithCallbacks(this.props.mainAPI.deleteById)([this.state.currentId])} /> : ""}
       </Col>
     </>);
   }
@@ -233,7 +292,7 @@ export default class BaseMainForm extends React.Component {
     return (<>
       {possibleTypes && this.state.viewType === "browse" ?
         <Form.Control as="select" value={this.state.current.type} custom defaultValue="0"
-          onChange={(e) => this.setState({ current: {...this.state.current, type: e.target.value} })}>
+          onChange={(e) => this.filterByType(e.currentTarget.value)}>
           <option value="0">&lt;--- choose a type ---&gt;</option>
           {Object.entries(possibleTypes)
             .map(([_, value]) => <option value={value}>{value}</option>)}
@@ -268,6 +327,8 @@ export default class BaseMainForm extends React.Component {
     return (<>
       <Container>
         {this.state.alert ? this.state.alert : ""}
+        {this.state.notifications && this.state.notifications.length > 0 ? 
+          <ToastWrapper>{this.state.notifications}</ToastWrapper> : ""}
         {this.renderTitle()}
         <br />
         {this.renderTopButtons()}

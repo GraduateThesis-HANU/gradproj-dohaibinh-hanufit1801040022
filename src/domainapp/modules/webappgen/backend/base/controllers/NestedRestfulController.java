@@ -1,10 +1,9 @@
 package domainapp.modules.webappgen.backend.base.controllers;
 
-import domainapp.modules.webappgen.backend.annotations.Create;
-import domainapp.modules.webappgen.backend.annotations.ID;
-import domainapp.modules.webappgen.backend.annotations.Modifying;
-import domainapp.modules.webappgen.backend.annotations.Retrieve;
+import domainapp.modules.webappgen.backend.annotations.*;
 import domainapp.modules.webappgen.backend.base.models.Identifier;
+import domainapp.modules.webappgen.backend.base.models.Page;
+import domainapp.modules.webappgen.backend.base.models.PagingModel;
 
 import java.util.Collection;
 import java.util.Map;
@@ -27,7 +26,10 @@ public interface NestedRestfulController<TOuter, TInner> {
     /**
      * Retrieve a list of inner object instances owned by the outer.
      * @param outerId
+     * @return
      */
     @Retrieve
-    Collection<TInner> getInnerListByOuterId(@ID Identifier<?> outerId);
+    Page<TInner> getInnerListByOuterId(
+            @ID Identifier<?> outerId,
+            @PagingCondition PagingModel pagingModel);
 }

@@ -7,15 +7,16 @@ import domainapp.basics.model.meta.DAssoc.AssocType;
 import domainapp.basics.model.meta.DAssoc.Associate;
 import domainapp.basics.model.meta.DAttr.Type;
 import domainapp.basics.util.Tuple;
+import domainapp.basics.util.events.ChangeEventSource;
+import domainapp.modules.domevents.CMEventType;
+import domainapp.modules.domevents.EventType;
+import domainapp.modules.domevents.Subscriber;
 import examples.domainapp.modules.webappgen.backend.exceptions.DExCode;
 import examples.domainapp.modules.webappgen.backend.services.enrolment.model.Enrolment;
 import examples.domainapp.modules.webappgen.backend.services.sclass.model.SClass;
 import examples.domainapp.modules.webappgen.backend.utils.DToolkit;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 
 /**
  * Represents a student. The student ID is auto-incremented from the current
@@ -25,7 +26,7 @@ import java.util.Date;
  * @version 2.0
  */
 @DClass(schema="courseman")
-public class Student {
+public class Student implements Subscriber {
   public static final String A_name = "name";
   public static final String A_gender = "gender";
   public static final String A_id = "id";
@@ -447,6 +448,36 @@ public class Student {
       } catch (RuntimeException e) {
         throw new ConstraintViolationException(
             ConstraintViolationException.Code.INVALID_VALUE, e, new Object[] {maxId});
+      }
+    }
+  }
+
+  /**
+   * @effects
+   *  Handle events fired by {@link vn.com.courseman.model.events.Enrolment}.
+   */
+  @Override
+  public void handleEvent(EventType type, ChangeEventSource source) {
+    CMEventType eventType = (CMEventType) type;
+    List data = source.getObjects();
+    Object srcObj = data.get(0);
+
+    System.out.println(this + ".\n   handleEvent(" + eventType + ", " + srcObj + ")");
+
+    if (srcObj instanceof Enrolment) {
+      Enrolment enrolment = (Enrolment) srcObj;
+
+      switch (eventType) {
+        case OnCreated:
+          // update links
+          this.addNewEnrolment(enrolment);
+          break;
+        case OnUpdated:
+          break;
+        case OnRemoved:
+          // remove link
+          this.removeEnrolment(enrolment);
+          break;
       }
     }
   }

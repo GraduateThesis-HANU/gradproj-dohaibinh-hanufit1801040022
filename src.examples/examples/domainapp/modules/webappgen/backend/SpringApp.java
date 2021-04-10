@@ -93,6 +93,7 @@ public class SpringApp {
             sw.init();
             try {
                 sw.addClasses(model);
+                sw.loadObjects(model);
             } catch (NotPossibleException
                     | NotFoundException
                     | DataSourceException e) {

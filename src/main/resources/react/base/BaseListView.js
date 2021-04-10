@@ -35,6 +35,8 @@ export default class BaseListView extends React.Component {
     if (this.props.parentId 
       && this.props.parentId !== ""
       && this.props.parentId === this.parentId) return;
+    if (this.props.current 
+      && this.props.current.pageCount !== undefined) return;
     this.retrieveListData();
   }
 

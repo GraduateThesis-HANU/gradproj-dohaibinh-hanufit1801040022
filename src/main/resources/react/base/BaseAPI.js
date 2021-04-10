@@ -15,6 +15,7 @@ export default class BaseAPI {
     this.getAllInner = this.getAllInner.bind(this);
     this.getById = this.getById.bind(this);
     this.getByPage = this.getByPage.bind(this);
+    this.getByPageAndType = this.getByPageAndType.bind(this);
     this.getFirstPage = this.getFirstPage.bind(this);
     this.updateById = this.updateById.bind(this);
   }
@@ -38,6 +39,17 @@ export default class BaseAPI {
 
   getByPage([pageNumber, onSuccess = undefined, onFailure = undefined]) {
     const url = `${constants.host}/${this.objectNamePlural}?pageNumber=${pageNumber}`;
+    const method = "GET";
+    this.commFunction(
+      url, method, undefined
+    ).then(onSuccess).catch(onFailure);
+  }
+
+  getByPageAndType([pageNumber, type, onSuccess = undefined, onFailure = undefined]) {
+    if (!type) return;
+    const filteringType = type === "0" ? undefined : type;
+    const pageNo = pageNumber ? pageNumber : 1;
+    const url = `${constants.host}/${this.objectNamePlural}?pageNumber=${pageNo}${filteringType ? `&type=${filteringType}` : ""}`;
     const method = "GET";
     this.commFunction(
       url, method, undefined

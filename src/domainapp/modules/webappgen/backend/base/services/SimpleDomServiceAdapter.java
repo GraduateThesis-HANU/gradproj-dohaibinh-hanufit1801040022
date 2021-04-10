@@ -94,6 +94,7 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
             if (!id.getId().equals(
                 IdentifierUtils.getIdField(getType()).get(entity))) return null;
             sw.updateObject(type, entity);
+            sw.loadObjects(getType()); // reload from db
             return entity;
         } catch (NotPossibleException | NotFoundException
                 | DataSourceException | IllegalArgumentException

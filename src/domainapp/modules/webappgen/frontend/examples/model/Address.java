@@ -28,8 +28,8 @@ public class Address {
     @DAttr(name = "id", id = true, auto = true, length = 3, mutable = false, optional = false, type = Type.Integer)
     private int id;
 
-    @DAttr(name = "cityName", type = Type.String, length = 20, optional = false)
-    private String cityName;
+    @DAttr(name = "name", type = Type.String, length = 20, optional = false)
+    private String name;
 
     @DAttr(name = "student", type = Type.Domain, optional = true, serialisable = false)
     @DAssoc(ascName = "student-has-address", role = "address", ascType = AssocType.One2One, endType = AssocEndType.One, associate = @Associate(type = Student.class, cardMin = 1, cardMax = 1, determinant = true))
@@ -61,15 +61,15 @@ public class Address {
     }
 
     @DOpt(type = DOpt.Type.Getter)
-    @AttrRef(value = "cityName")
+    @AttrRef(value = "name")
     public String getCityName() {
-        return this.cityName;
+        return this.name;
     }
 
     @DOpt(type = DOpt.Type.Setter)
-    @AttrRef(value = "cityName")
-    public void setCityName(String cityName) {
-        this.cityName = cityName;
+    @AttrRef(value = "name")
+    public void setCityName(String name) {
+        this.name = name;
     }
 
     @DOpt(type = DOpt.Type.Getter)
@@ -92,23 +92,23 @@ public class Address {
     }
 
     @DOpt(type = DOpt.Type.DataSourceConstructor)
-    public Address(Integer id, String cityName) throws ConstraintViolationException {
+    public Address(Integer id, String name) throws ConstraintViolationException {
         this.id = genId(id);
-        this.cityName = cityName;
+        this.name = name;
         this.student = null;
     }
 
     @DOpt(type = DOpt.Type.ObjectFormConstructor)
-    public Address(String cityName, Student student) throws ConstraintViolationException {
+    public Address(String name, Student student) throws ConstraintViolationException {
         this.id = genId(null);
-        this.cityName = cityName;
+        this.name = name;
         this.student = student;
     }
 
     @DOpt(type = DOpt.Type.RequiredConstructor)
-    public Address(String cityName) throws ConstraintViolationException {
+    public Address(String name) throws ConstraintViolationException {
         this.id = genId(null);
-        this.cityName = cityName;
+        this.name = name;
         this.student = null;
     }
 

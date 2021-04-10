@@ -1,20 +1,19 @@
 package domainapp.modules.webappgen.backend.base.controllers;
 
+import domainapp.basics.model.meta.DAssoc;
+import domainapp.basics.model.meta.DAttr;
 import domainapp.modules.webappgen.backend.base.models.Identifier;
+import domainapp.modules.webappgen.backend.base.models.Page;
+import domainapp.modules.webappgen.backend.base.models.PagingModel;
 import domainapp.modules.webappgen.backend.base.services.CrudService;
-import domainapp.basics.model.meta.DOpt;
 import domainapp.modules.webappgen.backend.base.websockets.WebSocketHandler;
 import domainapp.modules.webappgen.backend.utils.ClassAssocUtils;
 import domainapp.modules.webappgen.backend.utils.StringUtils;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.*;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Locale;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -40,16 +39,52 @@ public abstract class DefaultNestedRestfulController<T1, T2>
     public T2 createInner(Identifier<?> outerId, T2 requestBody) {
         // TODO: FIX THIS!
         try {
-            CrudService<T2> svc = getServiceOfGenericType(innerType.getCanonicalName());
-//            T1 outer = (T1) getServiceOfGenericType(outerType.getCanonicalName()).getEntityById(outerId);
+            CrudService<T2> svc = getServiceOfGenericType(innerType.getSimpleName());
+            CrudService<T1> outerService = getServiceOfGenericType(outerType.getSimpleName());
+            T1 outer = outerService.getEntityById(outerId);
+
+            // retrieve correct associations
+            Class<T2> innerCls = (Class) requestBody.getClass();
+            for (Field field : innerCls.getDeclaredFields()) {
+                if (!field.isAnnotationPresent(DAssoc.class)) {
+                    continue;
+                }
+                DAssoc dAssoc = field.getAnnotation(DAssoc.class);
+                DAssoc.AssocType assocType = dAssoc.ascType();
+                DAssoc.AssocEndType endType = dAssoc.endType();
+                if (assocType.equals(DAssoc.AssocType.Many2Many)
+                    || (assocType.equals(DAssoc.AssocType.One2Many) && endType.equals(DAssoc.AssocEndType.One))) {
+                    continue;
+                }
+                CrudService service = getServiceOfGenericType(field.getType().getSimpleName());
+                field.setAccessible(true);
+                Object current = field.get(requestBody);
+                if (current.getClass().equals(outer.getClass())) {
+                    outer = (T1)current;
+                }
+                Class currentClass = current.getClass().getSuperclass() != Object.class ?
+                        current.getClass().getSuperclass() : current.getClass();
+                Field currentIdField = getIdField(current.getClass());
+                currentIdField.setAccessible(true);
+                String identifier = currentIdField.get(current).toString();
+                String setter = "set" + Character.toUpperCase(field.getName().charAt(0)) + field.getName().substring(1);
+                getMethodByName(innerCls, setter, currentClass)
+                        .invoke(requestBody,
+                                service.getEntityById(Identifier.fromString(identifier)));
+            }
+
+            // create object
             T2 created = svc.createEntity(requestBody);
-//            getLinkAdder(outerType, innerType).invoke(outer, created);
+
+            // update outer
+            outerService.updateEntity(outerId, outer);
 
             // perform server-push notification
             performServerPush();
 
             return created;
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | IllegalAccessException
+                | InvocationTargetException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -63,6 +98,21 @@ public abstract class DefaultNestedRestfulController<T1, T2>
                         .collect(Collectors.toList()));
     }
 
+    private static Field getIdField(Class<?> cls) {
+        if (cls.getSuperclass() != Object.class) {
+            cls = cls.getSuperclass();
+        }
+        Field[] fields = cls.getDeclaredFields();
+        for (Field field : fields) {
+            if (!field.isAnnotationPresent(DAttr.class)) {
+                continue;
+            }
+            DAttr dAttr = field.getAnnotation(DAttr.class);
+            if (dAttr.id()) return field;
+        }
+        throw new IllegalStateException("No ID field found!");
+    }
+
     private static Method getMethodByName(Class<?> cls, String name, Class<?>... parameters) {
         try {
             return cls.getMethod(name, parameters);
@@ -71,43 +121,43 @@ public abstract class DefaultNestedRestfulController<T1, T2>
         }
     }
 
-    private static Method getLinkAdder(Class<?> cls, Class<?> toAdd) {
-        for (Method m : cls.getMethods()) {
-            DOpt dopt = m.getAnnotation(DOpt.class);
-            if (dopt != null && dopt.type() == DOpt.Type.LinkAdderNew
-                    && m.getParameters()[0].getType() == toAdd) {
-                return m;
-            }
-        }
-        return null;
-    }
+    private static <T> Page<T> paginate(Collection<T> entities, PagingModel pagingModel) {
+        final int pageNumber = pagingModel.getPage();
+        final int itemPerPage = pagingModel.getCount();
 
-    private static Constructor<?> getRequiredConstructor(Class<?> cls) {
-        for (Constructor<?> c : cls.getConstructors()) {
-            boolean isReqConstructor = false;
-            DOpt[] dopts = c.getAnnotationsByType(DOpt.class);
-            for (DOpt d : dopts) {
-                if (d.type().equals(DOpt.Type.RequiredConstructor)) {
-                    isReqConstructor = true;
-                    break;
-                }
-            }
-            if (isReqConstructor) {
-                return c;
-            }
+        if (entities == null || entities.isEmpty()) {
+            return Page.empty();
         }
-        return null;
+        final int size = entities.size();
+        final int skip = (pageNumber - 1) * itemPerPage;
+        if (skip > size) {
+            throw new NoSuchElementException("Not found: Page #" + pageNumber);
+        }
+        final int pageCount = size / itemPerPage + size % itemPerPage > 0 ? 1 : 0;
+        final Collection<T> pageContent = entities.stream().skip(skip).limit(itemPerPage).collect(Collectors.toList());
+        return new Page<>(pageNumber, pageCount, pageContent);
     }
 
     @Override
-    public Collection<T2> getInnerListByOuterId(Identifier<?> outerId) {
+    public Page<T2> getInnerListByOuterId(Identifier<?> outerId, PagingModel pagingModel) {
         // reflection-based solution -- needs HEAVY optimization
-        CrudService<T1> svc = getServiceOfGenericType(outerType.getCanonicalName());
+        CrudService<T1> svc = getServiceOfGenericType(outerType.getSimpleName());
         T1 outerById = svc.getEntityById(outerId);
-        String getInnerMethodName = "get" + innerType.getSimpleName() + "s";
-        Method getInnersFromOuter = getMethodByName(outerType, getInnerMethodName);
+        Method getInnersFromOuter = null;
+        for (Method method : outerType.getMethods()) {
+            if (method.getName().toLowerCase(Locale.ROOT)
+                    .contains(innerType.getSimpleName().toLowerCase(Locale.ROOT))
+                && (method.getReturnType().equals(innerType)
+                    || method.getReturnType().equals(Collection.class))) {
+                getInnersFromOuter = method;
+                break;
+            }
+        }
+        if (getInnersFromOuter == null) {
+            throw new IllegalStateException("No suitable getter found!");
+        }
         try {
-            return (Collection<T2>) getInnersFromOuter.invoke(outerById);
+            return paginate((Collection<T2>) getInnersFromOuter.invoke(outerById), pagingModel);
         } catch (IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException e) {
             throw new RuntimeException(e);

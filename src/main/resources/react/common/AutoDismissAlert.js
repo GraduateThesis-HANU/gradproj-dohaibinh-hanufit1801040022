@@ -8,7 +8,7 @@ export default function AutoDismissAlert(props) {
     setTimeout(() => {
       setShow(false);
       props.onDisposed();
-    }, 2500);
+    }, props.timeout ? props.timeout : 2500);
   })
 
   return (
@@ -18,6 +18,7 @@ export default function AutoDismissAlert(props) {
         <p>
           {props.text}
         </p>
+        {props.actionButtons ? props.actionButtons : ""}
       </Alert>
     </>
   );
