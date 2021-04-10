@@ -3,6 +3,9 @@ package domainapp.modules.webappgen.backend.base.controllers;
 import domainapp.modules.webappgen.backend.base.models.Identifier;
 import domainapp.modules.webappgen.backend.base.services.CrudService;
 import domainapp.basics.model.meta.DOpt;
+import domainapp.modules.webappgen.backend.base.websockets.WebSocketHandler;
+import domainapp.modules.webappgen.backend.utils.ClassAssocUtils;
+import domainapp.modules.webappgen.backend.utils.StringUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -12,6 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class DefaultNestedRestfulController<T1, T2>
@@ -22,6 +26,12 @@ public abstract class DefaultNestedRestfulController<T1, T2>
     protected Class<T2> innerType = (Class) ((ParameterizedType) getClass()
         .getGenericSuperclass()).getActualTypeArguments()[1];
 
+    protected WebSocketHandler webSocketHandler;
+
+    public DefaultNestedRestfulController(WebSocketHandler webSocketHandler) {
+        this.webSocketHandler = webSocketHandler;
+    }
+
     protected <X> CrudService<X> getServiceOfGenericType(String clsName) {
         return ServiceRegistry.getInstance().get(clsName);
     }
@@ -29,17 +39,28 @@ public abstract class DefaultNestedRestfulController<T1, T2>
     @Override
     public T2 createInner(Identifier<?> outerId, T2 requestBody) {
         // TODO: FIX THIS!
-
         try {
             CrudService<T2> svc = getServiceOfGenericType(innerType.getCanonicalName());
-            T1 outer = (T1) getServiceOfGenericType(outerType.getCanonicalName()).getEntityById(outerId);
+//            T1 outer = (T1) getServiceOfGenericType(outerType.getCanonicalName()).getEntityById(outerId);
             T2 created = svc.createEntity(requestBody);
-            getLinkAdder(outerType, innerType).invoke(outer, created);
+//            getLinkAdder(outerType, innerType).invoke(outer, created);
+
+            // perform server-push notification
+            performServerPush();
+
             return created;
-        } catch (IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException ex) {
+        } catch (IllegalArgumentException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    private void performServerPush() {
+        webSocketHandler.handleServerPush(
+                ClassAssocUtils.getAssociated(innerType)
+                        .stream()
+                        .map(Class::getSimpleName)
+                        .map(StringUtils::toUrlEntityString)
+                        .collect(Collectors.toList()));
     }
 
     private static Method getMethodByName(Class<?> cls, String name, Class<?>... parameters) {

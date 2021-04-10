@@ -6,10 +6,12 @@ import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.ExplicitConstructorInvocationStmt;
 import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import domainapp.modules.common.parser.ParserToolkit;
@@ -114,5 +116,38 @@ public class SourceCodeGenerators {
         }
 
         return compilationUnit;
+    }
+
+    public static ConstructorDeclaration generateAutowiredConstructor(
+            ClassOrInterfaceDeclaration classDeclaration,
+            Class superClass) {
+        final AtomicInteger counter = new AtomicInteger(0);
+        ConstructorDeclaration constructorDeclaration = classDeclaration.addConstructor(Modifier.PUBLIC);
+        counter.set(0);
+        for (Class parameterType : superClass.getConstructors()[0].getParameterTypes()) {
+            if (parameterType == Class.class) continue;
+            Parameter parameter = new Parameter(
+                    JavaParser.parseType(parameterType.getCanonicalName()),
+                    "arg" + counter.getAndIncrement()
+            );
+            constructorDeclaration.addParameter(parameter);
+        }
+
+        AnnotationExpr autowiredAnnotation = new NormalAnnotationExpr(
+                JavaParser.parseName(Autowired.class.getSimpleName()),
+                new NodeList<>());
+        constructorDeclaration.addAnnotation(autowiredAnnotation);
+
+        BlockStmt constructorBody = new BlockStmt();
+        // super call
+        ExplicitConstructorInvocationStmt superConstructorCall
+                = new ExplicitConstructorInvocationStmt(
+                false, null, new NodeList<>(
+                constructorDeclaration.getParameters()
+                        .stream().map(Parameter::getNameAsExpression)
+                        .collect(Collectors.toList())));
+        constructorBody.addStatement(superConstructorCall);
+        constructorDeclaration.setBody(constructorBody);
+        return constructorDeclaration;
     }
 }

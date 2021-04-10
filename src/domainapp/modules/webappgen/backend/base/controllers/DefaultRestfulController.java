@@ -4,8 +4,13 @@ import domainapp.modules.webappgen.backend.base.models.Identifier;
 import domainapp.modules.webappgen.backend.base.models.Page;
 import domainapp.modules.webappgen.backend.base.models.PagingModel;
 import domainapp.modules.webappgen.backend.base.services.CrudService;
+import domainapp.modules.webappgen.backend.base.websockets.WebSocketHandler;
+import domainapp.modules.webappgen.backend.utils.ClassAssocUtils;
+import domainapp.modules.webappgen.backend.utils.StringUtils;
 
 import java.lang.reflect.ParameterizedType;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link #RestfulController}
@@ -17,6 +22,12 @@ public abstract class DefaultRestfulController<T> implements RestfulController<T
         (Class<T>) ((ParameterizedType) getClass()
             .getGenericSuperclass()).getActualTypeArguments()[0];
 
+    private final WebSocketHandler webSocketHandler;
+
+    public DefaultRestfulController(WebSocketHandler webSocketHandler) {
+        this.webSocketHandler = webSocketHandler;
+    }
+
     protected Class<T> getGenericType() {
         return genericType;
     }
@@ -27,8 +38,23 @@ public abstract class DefaultRestfulController<T> implements RestfulController<T
 
     @Override
     public T createEntity(T inputEntity) {
-        return getServiceOfGenericType(genericType)
+        T createdEntity = getServiceOfGenericType(genericType)
             .createEntity(inputEntity);
+        // server-push notification
+        performServerPush();
+
+        return createdEntity;
+    }
+
+    private void performServerPush() {
+        List<Class<?>> associatedClasses = ClassAssocUtils.getAssociated(genericType);
+        associatedClasses.add(genericType);
+        webSocketHandler.handleServerPush(
+                associatedClasses
+                    .stream()
+                    .map(Class::getSimpleName)
+                    .map(StringUtils::toUrlEntityString)
+                    .collect(Collectors.toList()));
     }
 
     @Override
@@ -45,13 +71,18 @@ public abstract class DefaultRestfulController<T> implements RestfulController<T
 
     @Override
     public T updateEntity(Identifier<?> id, T updatedInstance) {
-        return getServiceOfGenericType(genericType)
+        T updatedEntity = getServiceOfGenericType(genericType)
             .updateEntity(id, updatedInstance);
+        // server-push notification
+        performServerPush();
+        return updatedEntity;
     }
 
     @Override
     public void deleteEntityById(Identifier<?> id) {
         getServiceOfGenericType(genericType).deleteEntityById(id);
+        // server-push notification
+        performServerPush();
     }
 
 }

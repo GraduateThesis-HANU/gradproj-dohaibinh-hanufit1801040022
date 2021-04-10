@@ -5,11 +5,13 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.MemberValuePair;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.expr.StringLiteralExpr;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import domainapp.modules.webappgen.backend.annotations.NestedResourceController;
 import domainapp.modules.webappgen.backend.annotations.bridges.AnnotationRep;
 import domainapp.modules.webappgen.backend.annotations.bridges.RestAnnotationAdapter;
@@ -111,6 +113,7 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         ann.setValueOf("innerType", inflector.underscore(inflector.pluralize(innerType.getSimpleName())).replace("_", "-"));
         ann.setValueOf("outerType", inflector.underscore(inflector.pluralize(outerType.getSimpleName())).replace("_", "-"));
         annotationAdapter.addSourceAnnotation(ann);
+        SourceCodeGenerators.generateAutowiredConstructor(classDeclaration, baseImplClass);
 
         addAnnotations(baseClass, endpoint, name, compilationUnit, classDeclaration);
 
@@ -151,6 +154,8 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
                 compilationUnit.getType(0).asClassOrInterfaceDeclaration();
         classDeclaration.setName(classDeclaration.getNameAsString()
                 .replace("Service", "Controller"));
+
+        SourceCodeGenerators.generateAutowiredConstructor(classDeclaration, baseImplClass);
 
         addAnnotations(baseClass, endpoint, name, compilationUnit, classDeclaration);
 

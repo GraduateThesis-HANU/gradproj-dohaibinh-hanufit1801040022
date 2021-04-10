@@ -2,7 +2,6 @@ package domainapp.modules.webappgen.backend.generators;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -19,17 +18,13 @@ import domainapp.modules.webappgen.backend.utils.OutputPathUtils;
 import examples.domainapp.modules.webappgen.backend.services.student.model.Student;
 import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.CourseModule;
 import org.mdkt.compiler.InMemoryJavaCompiler;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Generated;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
@@ -69,7 +64,21 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
                 (ClassOrInterfaceDeclaration) serviceCompilationUnit.getTypes().get(0);
 
         // implement constructor
-        generateAutowiredConstructor(type, serviceClassDeclaration, superClass);
+        ConstructorDeclaration constructorDeclaration =
+                SourceCodeGenerators.generateAutowiredConstructor(
+                        serviceClassDeclaration, superClass);
+
+        BlockStmt constructorBody = generateConstructorBody(
+                type, superClass, constructorDeclaration);
+        constructorDeclaration.setBody(constructorBody);
+
+        // @Generated
+        AnnotationExpr generatedAnnotation = new NormalAnnotationExpr(
+                JavaParser.parseName(Generated.class.getSimpleName()),
+                new NodeList<>(
+                        new MemberValuePair("value",
+                                new StringLiteralExpr(getClass().getCanonicalName()))));
+        serviceClassDeclaration.addAnnotation(generatedAnnotation);
 
         String outputFQName = serviceCompilationUnit.getPackageDeclaration().get().getNameAsString()
                 + "." + serviceClassDeclaration.getNameAsString();
@@ -103,34 +112,17 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
         }
     }
 
-    private <T> void generateAutowiredConstructor(Class<T> type,
-                                                  ClassOrInterfaceDeclaration serviceClassDeclaration,
-                                                  Class superClass) {
-        final AtomicInteger counter = new AtomicInteger(0);
-        ConstructorDeclaration constructorDeclaration = serviceClassDeclaration.addConstructor(Modifier.PUBLIC);
-        counter.set(0);
-        for (Class parameterType : superClass.getConstructors()[0].getParameterTypes()) {
-            if (parameterType == Class.class) continue;
-            Parameter parameter = new Parameter(
-                    JavaParser.parseType(parameterType.getCanonicalName()),
-                    "arg" + counter.getAndIncrement()
-            );
-            constructorDeclaration.addParameter(parameter);
-        }
+    private BlockStmt generateConstructorBody(Class type,
+                                              Class superClass,
+                                              ConstructorDeclaration constructorDeclaration) {
+        // constructor body
+        BlockStmt constructorBody = constructorDeclaration.getBody();
 
-        BlockStmt constructorBody = new BlockStmt();
-        // super call
-        ExplicitConstructorInvocationStmt superConstructorCall
-                = new ExplicitConstructorInvocationStmt(
-                false, null, new NodeList<>(
-                constructorDeclaration.getParameters()
-                        .stream().map(Parameter::getNameAsExpression)
-                        .collect(Collectors.toList())));
-        constructorBody.addStatement(superConstructorCall);
         constructorBody.addStatement(
                 new MethodCallExpr(new ThisExpr(), "setType",
                         new NodeList<>(new NameExpr(type.getSimpleName() + ".class"))));
 
+        constructorDeclaration.setBody(constructorBody);
         if (superClass.equals(absInheritedCrudServiceClass)) {
             constructorBody.addStatement(new MethodCallExpr(
                     new ThisExpr(),
@@ -144,19 +136,7 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
                             new StringLiteralExpr(type.getCanonicalName()))));
             second.addAnnotation(qualifierAnnotation);
         }
-
-        constructorDeclaration.setBody(constructorBody);
-        AnnotationExpr autowiredAnnotation = new NormalAnnotationExpr(
-                JavaParser.parseName(Autowired.class.getSimpleName()),
-                new NodeList<>());
-        constructorDeclaration.addAnnotation(autowiredAnnotation);
-
-        AnnotationExpr generatedAnnotation = new NormalAnnotationExpr(
-                JavaParser.parseName(Generated.class.getSimpleName()),
-                new NodeList<>(
-                        new MemberValuePair("value",
-                                new StringLiteralExpr(getClass().getCanonicalName()))));
-        serviceClassDeclaration.addAnnotation(generatedAnnotation);
+        return constructorBody;
     }
 }
 
