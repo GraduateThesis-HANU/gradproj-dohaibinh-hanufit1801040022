@@ -328,6 +328,7 @@ public class FormGenerator implements ViewGenerator {
                                 "custom>",
                         inputName, inputName, false))
                 .append("\n");
+        selectOptionField.append("    <option value='0' disabled selected>&lt;Please choose one&gt;</option>");
         for (Object possibleValue : possibleValues) {
             selectOptionField.append("    <option value=")
                     .append("\"")

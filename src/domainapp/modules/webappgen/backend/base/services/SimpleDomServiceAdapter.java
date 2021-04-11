@@ -1,5 +1,9 @@
 package domainapp.modules.webappgen.backend.base.services;
 
+import domainapp.basics.controller.ControllerTk;
+import domainapp.basics.controller.helper.DataValidator;
+import domainapp.basics.exceptions.ConstraintViolationException;
+import domainapp.basics.model.meta.DAttr;
 import domainapp.modules.webappgen.backend.utils.IdentifierUtils;
 import domainapp.modules.webappgen.backend.base.models.Identifier;
 import domainapp.modules.webappgen.backend.base.models.Page;
@@ -9,10 +13,14 @@ import domainapp.basics.exceptions.NotFoundException;
 import domainapp.basics.exceptions.NotPossibleException;
 import domainapp.basics.model.query.Expression.Op;
 import domainapp.softwareimpl.SoftwareImpl;
+import vn.com.courseman.model.basic.Enrolment;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unchecked")
 public class SimpleDomServiceAdapter<T> implements CrudService<T> {
@@ -37,12 +45,33 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
         this.type = type;
     }
 
+    protected static <T> void validateObject(T input, SoftwareImpl sw)
+            throws ConstraintViolationException {
+        Class<T> cls = (Class) input.getClass();
+        DataValidator<T> validator =
+                ControllerTk.getDomainSpecificDataValidator(sw.getDODM(), cls);
+        List<Field> attrFields = Stream.of(cls.getDeclaredFields())
+                .filter(field -> field.isAnnotationPresent(DAttr.class))
+                .collect(Collectors.toList());
+        for (Field field : attrFields) {
+            DAttr attr = field.getAnnotation(DAttr.class);
+            field.setAccessible(true);
+            try {
+                Object fieldValue = field.get(input);
+                validator.validateDomainValue(attr, fieldValue);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Override
     public T createEntity(T entity) {
         try {
+            validateObject(entity, sw);
             sw.addObject((Class<T>) entity.getClass(), entity);
             return entity;
-        } catch (DataSourceException e) {
+        } catch (DataSourceException | ConstraintViolationException e) {
             throw new RuntimeException(e);
         }
     }
@@ -91,6 +120,7 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
     @Override
     public T updateEntity(Identifier<?> id, T entity) {
         try {
+            validateObject(entity, sw);
             if (!id.getId().equals(
                 IdentifierUtils.getIdField(getType()).get(entity))) return null;
             sw.updateObject(type, entity);

@@ -1,0 +1,138 @@
+package domainapp.modules.webappgen.backend.spring;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import domainapp.basics.exceptions.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@RestControllerAdvice
+public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
+    private final ObjectMapper objectMapper;
+
+    @Autowired
+    public CustomExceptionHandler(MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+        objectMapper = springMvcJacksonConverter.getObjectMapper();
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatus status,
+            WebRequest request) {
+        List<String> errors = new ArrayList<>();
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errors.add(error.getField() + ": " + error.getDefaultMessage());
+        }
+        for (ObjectError error : ex.getBindingResult().getGlobalErrors()) {
+            errors.add(error.getObjectName() + ": " + error.getDefaultMessage());
+        }
+        final ApiError apiError = new ApiError(ex.getLocalizedMessage(), errors);
+        try {
+            final String json = objectMapper.writeValueAsString(apiError);
+            return handleExceptionInternal(ex, json, headers, status, request);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @ExceptionHandler({ ConstraintViolationException.class })
+    public ResponseEntity<Object> handleConstraintViolation(
+            ConstraintViolationException ex, WebRequest request) {
+        String errText = ex.getCode().getText();
+        String message = ex.getMessage();
+        final ApiError apiError = new ApiError(message, errText);
+        try {
+            final String json = objectMapper.writeValueAsString(apiError);
+            return handleExceptionInternal(
+                    ex, json, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @ExceptionHandler({ NotFoundException.class })
+    public ResponseEntity<Object> handleNotFoundException(
+            ApplicationException ex, WebRequest request) {
+        String errText = ex.getCode().getText();
+        String message = ex.getMessage();
+        final ApiError apiError = new ApiError(message, errText);
+        try {
+            final String json = objectMapper.writeValueAsString(apiError);
+            return handleExceptionInternal(
+                    ex, json, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @ExceptionHandler({ RuntimeException.class })
+    public ResponseEntity<Object> handleRuntimeException(
+            RuntimeException ex, WebRequest request) {
+        Throwable cause = ex.getCause();
+        if (cause == null) return handleExceptionInternal(
+                ex, new Object(), new HttpHeaders(),
+                HttpStatus.INTERNAL_SERVER_ERROR, request);
+        if (cause instanceof DataSourceException
+                || cause instanceof QueryException) {
+            return handleDataException((ApplicationException) cause, request);
+        }
+        if (cause instanceof ConstraintViolationException) {
+            return handleConstraintViolation((ConstraintViolationException) cause, request);
+        }
+        if (cause instanceof NotFoundException) {
+            return handleNotFoundException((ApplicationException) cause, request);
+        }
+        if (cause instanceof NotPossibleException) {
+            return handleOtherException((ApplicationRuntimeException) cause, request);
+        }
+
+        System.out.println("HANDLING EXCEPTION WITH CAUSE: " + cause);
+
+        return handleExceptionInternal(
+                ex, "{}", new HttpHeaders(),
+                HttpStatus.INTERNAL_SERVER_ERROR, request);
+    }
+
+    private ResponseEntity<Object> handleOtherException(
+            ApplicationRuntimeException ex, WebRequest request) {
+        String errText = ex.getCode().getText();
+        String message = ex.getMessage();
+        final ApiError apiError = new ApiError(message, errText);
+        try {
+            final String json = objectMapper.writeValueAsString(apiError);
+            return handleExceptionInternal(
+                    ex, json, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private ResponseEntity<Object> handleDataException(
+            ApplicationException ex, WebRequest request) {
+        String errText = ex.getCode().getText();
+        String message = ex.getMessage();
+        final ApiError apiError = new ApiError(message, errText);
+        try {
+            final String json = objectMapper.writeValueAsString(apiError);
+            return handleExceptionInternal(
+                    ex, json, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
