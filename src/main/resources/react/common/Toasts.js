@@ -1,18 +1,24 @@
 import { useState } from "react";
 import { Toast } from "react-bootstrap";
 
-export function CustomToast({ header, children, timeout, onClick }) {
+export function CustomToast({ style, header, children, timeout, onClick }) {
   const [show, changeShow] = useState(true);
 
   return show ? (
-      <Toast show={show} delay={timeout} onClick={onClick}
+      <Toast className={`bg-${style}`} show={show} delay={timeout}
+            animation={true}
             onClose={() => changeShow(false)} autohide={true}
             style={{
-              zIndex: "9999",
-              background: "white"
+              zIndex: "999"
             }}>
-        <Toast.Header>{header}</Toast.Header>
-        <Toast.Body>{children}</Toast.Body>
+        <Toast.Header style={{
+          cursor: "pointer"
+        }} className={`d-flex justify-content-between`}>
+          <strong>{header}</strong>
+        </Toast.Header>
+        <Toast.Body className={`btn-${style}`} style={{
+          cursor: "pointer"
+        }} onClick={onClick}>{children}</Toast.Body>
       </Toast>) : "";
 }
 

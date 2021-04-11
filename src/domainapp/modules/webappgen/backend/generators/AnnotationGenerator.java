@@ -137,7 +137,7 @@ final class AnnotationGenerator {
     }
 
     private String[] getIgnoredFields(Class<?>[] defined) {
-        final List<String> result = new ArrayList<>();
+        final Set<String> result = new HashSet<>();
         for (Class<?> cls : defined) {
             final String className = cls.getName();
             if (ignoredFields.containsKey(className)) {

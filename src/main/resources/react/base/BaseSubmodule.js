@@ -25,9 +25,10 @@ export default class BaseSubmodule extends React.Component {
 
   renderExpandButton() {
     return (<>
-      <Button variant="success" className="mr-1" onClick={this.handleExpand}>
-      {this.props.title}
-      <FontAwesomeIcon className="ml-1"
+      <Button variant={this.props.compact ? "outline-secondary" : "success"}
+        className={this.props.compact ? "" : "mr-1"} onClick={this.handleExpand}>
+      {this.props.compact === true ? "" : <>{this.props.title}</>}
+      <FontAwesomeIcon className={this.props.compact === true ? "ml-0" : "ml-1"}
         icon={this.state.expanded === true ? faChevronUp : faChevronDown} />
     </Button>
     </>);

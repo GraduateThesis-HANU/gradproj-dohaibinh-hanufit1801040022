@@ -92,7 +92,8 @@ public final class ClassAssocUtils {
                 
                 if (assoc.ascType() == AssocType.One2Many
                         && assoc.endType() == AssocEndType.One
-                    || assoc.ascType() == AssocType.One2One) {
+//                    || assoc.ascType() == AssocType.One2One
+                ) {
                     nestedTypes.add(assoc.associate().type());
                 }
             }

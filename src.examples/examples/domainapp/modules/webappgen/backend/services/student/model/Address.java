@@ -1,5 +1,8 @@
 package examples.domainapp.modules.webappgen.backend.services.student.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.*;
 import domainapp.basics.model.meta.DAssoc.AssocEndType;
@@ -7,6 +10,9 @@ import domainapp.basics.model.meta.DAssoc.AssocType;
 import domainapp.basics.model.meta.DAssoc.Associate;
 import domainapp.basics.model.meta.DAttr.Type;
 import domainapp.basics.util.Tuple;
+
+import java.time.Instant;
+import java.util.Date;
 
 /**
  * A domain class whose objects are city names. This class is used as
@@ -36,6 +42,7 @@ public class Address {
   @DAssoc(ascName="student-has-city",role="city",
   ascType=AssocType.One2One, endType=AssocEndType.One,
   associate=@Associate(type=Student.class,cardMin=1,cardMax=1,determinant=true))
+//  @JsonIgnoreProperties({"address"})
   private Student student;
 
   // from object form: Student is not included

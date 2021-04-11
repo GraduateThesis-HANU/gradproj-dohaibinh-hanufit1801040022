@@ -35,7 +35,7 @@ export default class {{ view.name.main }} extends BaseMainForm {
   }
 
   renderForm() {
-    return <{{ view.name.form }} {...this.props} {...this.state}
+    return <{{ view.name.form }} {...this.state} {...this.props}
       handleStateChange={this.handleStateChange.bind(this)}
       handleTypeChange={(e) => this.setState({ current: {...this.state.current, type: e.target.value} })} />;
   }

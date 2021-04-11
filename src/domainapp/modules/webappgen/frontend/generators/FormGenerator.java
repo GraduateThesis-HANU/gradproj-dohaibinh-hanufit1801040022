@@ -20,6 +20,7 @@ import domainapp.modules.mccl.model.MCC;
 import org.modeshape.common.text.Inflector;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static domainapp.modules.webappgen.frontend.generators.utils.FileUtils.readWholeFile;
@@ -62,7 +63,7 @@ public class FormGenerator implements ViewGenerator {
     private final String title;
     private final String domainTypeName;
     private final Type type;
-    private final List<String> imports;
+    private final Set<String> imports;
     private String parent;
 
     public FormGenerator(MCC mcc, Type type) {
@@ -72,7 +73,7 @@ public class FormGenerator implements ViewGenerator {
         this.domainTypeName = mcc.getDomainClass().getName();
         this.template = readWholeFile(getClass()
                 .getClassLoader().getResource(getTemplateFile(type)).getFile());
-        this.imports = new LinkedList<>();
+        this.imports = new LinkedHashSet<>();
         this.parent = "";
     }
 
@@ -83,7 +84,7 @@ public class FormGenerator implements ViewGenerator {
         this.type = type;
         this.template = readWholeFile(getClass()
                 .getClassLoader().getResource(getTemplateFile(type)).getFile());
-        this.imports = new LinkedList<>();
+        this.imports = new LinkedHashSet<>();
         this.parent = "";
     }
 
@@ -322,13 +323,13 @@ public class FormGenerator implements ViewGenerator {
         selectOptionField
                 .append(String.format(
                         "  <Form.Control as=\"select\" " +
-                                "value={this.props.current.%s} " +
+                                "value={this.renderObject('this.props.current.%s')} " +
                                 onChange +
                                 (isTypeSelect ? "disabled={this.props.viewType !== \"create\"} " : "") +
                                 "custom>",
                         inputName, inputName, false))
                 .append("\n");
-        selectOptionField.append("    <option value='0' disabled selected>&lt;Please choose one&gt;</option>");
+        selectOptionField.append("    <option value='' disabled selected>&lt;Please choose one&gt;</option>");
         for (Object possibleValue : possibleValues) {
             selectOptionField.append("    <option value=")
                     .append("\"")
@@ -462,8 +463,30 @@ public class FormGenerator implements ViewGenerator {
                     .stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
+            final AtomicInteger autoFieldWidth = new AtomicInteger(9);
+            String extra = "";
             if (assoc.get("ascType").equals(DAssoc.AssocType.One2One)) {
-                return "";
+                // 1-1 gets the submodule button also
+                autoFieldWidth.set(8);
+                String actualFieldTypeName = actualFieldType.getSimpleName();
+                extra = String.format(
+                        "<%sSubmodule compact={true}" +
+                        "  mode='submodule'\n" +
+                        "  viewType={this.props.viewType}\n" +
+                        "  title=\"Manage %s\"\n" +
+                        "  current={this.props.current.%s}\n" +
+                        "  parentName=''\tparent={this.props.current}\n" +
+                        "  parentId={this.props.currentId}\n" +
+                        "  parentAPI={this.props.mainAPI}\n" +
+                        "  partialApplyWithCallbacks={this.partialApplyWithCallbacks} />",
+                        actualFieldTypeName,
+                        actualFieldTypeName,
+                        domainFieldName);
+                final String importTemplate = "import %s from \"./%s\";";
+                imports.add(String.format(importTemplate,
+                        actualFieldTypeName.concat("Submodule"),
+                        actualFieldTypeName.concat("Submodule")));
+//                return "";
             }
 
             inputType = "text";
@@ -477,7 +500,7 @@ public class FormGenerator implements ViewGenerator {
                 // { this.props.excludes && this.props.excludes.includes("student") ? "" : <></> }
                 String fName = Character.toLowerCase(shortFieldTypeName.charAt(0)) + shortFieldTypeName.substring(1);
                 return "{ this.props.excludes && this.props.excludes.includes(\""+ fName +"\") ? \"\" : <>" +
-                        "<FormGroup className='d-flex justify-content-between'>" +
+                        "<FormGroup className='d-flex flex-wrap justify-content-between align-items-end'>" +
                         generateViewInputField(itsIdInputField, classAST.getCls(), domainFieldName)
                                 .replace("FormGroup", "Col")
                                 .replace("<Col", "<Col md={2.5} className='px-0'")
@@ -485,7 +508,8 @@ public class FormGenerator implements ViewGenerator {
                         .concat(generateTemplatedViewInputField(
                                     label, inputType, domainFieldName, extraAttrs, false)
                                 .replace("FormGroup", "Col")
-                                .replace("<Col", "<Col md={9} className='px-0'"))
+                                .replace("<Col", "<Col md={" + autoFieldWidth.get() + "} className='px-0'"))
+                        .concat(extra)
                         .concat("</FormGroup>")
                         .concat("</> }");
                 // generateViewInputField(itsIdInputField, classAST.getCls()));

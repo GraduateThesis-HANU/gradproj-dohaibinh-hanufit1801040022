@@ -32,6 +32,7 @@ export default class BaseMainForm extends React.Component {
     this.resetState = this.resetState.bind(this);
     this.filterByType = this.filterByType.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.addToastPopup = this.addToastPopup.bind(this);
     this.getCreateHandler = this.getCreateHandler.bind(this);
     this.getPossibleTypes = this.getPossibleTypes.bind(this);
     this.onOperationFailed = this.onOperationFailed.bind(this);
@@ -45,6 +46,7 @@ export default class BaseMainForm extends React.Component {
 
   // lifecycle
   componentDidMount() {
+    if (this.props.parent) return;
     const socket = new SockJS(`${constants.host}/domainapp-ws`);
     const stompClient = new StompOverWSClient(socket);
     const self = this;
@@ -53,19 +55,7 @@ export default class BaseMainForm extends React.Component {
         endpoint: `/topic/${this.props.mainAPI.objectNamePlural}`,
         callback: (response) => {
           const message = JSON.parse(response.body).content;
-          const notiList = self.state.notifications ? self.state.notifications : []
-          const index = notiList.length;
-          self.setState({
-            notifications: [
-              ...notiList,
-              <CustomToast header="Notification" timeout={100000}
-                  onClick={() => window.location.reload()}
-                  onClose={() => self.setState({
-                    notifications: self.state.notifications.splice(index, 1)
-                  })}
-                  children={message} />
-            ]
-          })
+          self.addToastPopup(message, "light", () => window.location.reload());
         }
       }
     ]);
@@ -216,6 +206,22 @@ export default class BaseMainForm extends React.Component {
         heading={heading} text={text} onDisposed={onDisposed} />
     })
   }
+  // content: simple message string or JSX component
+  addToastPopup(content, style, onClick, header="App Notification", timeout=100000) {
+    const notiList = this.state.notifications ? this.state.notifications : [];
+    const index = notiList.length;
+    this.setState({
+      notifications: [
+        ...notiList,
+        <CustomToast header={header} timeout={timeout}
+            onClick={onClick} style={style}
+            onClose={() => this.setState({
+              notifications: this.state.notifications.splice(index, 1)
+            })}
+            children={content} />
+      ]
+    })
+  }
   onOperationSuccess(result) {
     if (result instanceof String) {
       this.setAlert("danger", "Message", result);
@@ -228,13 +234,25 @@ export default class BaseMainForm extends React.Component {
       this.handleStateChange("current", result);
     }
     // this.handleStateChange("currentId", "", true);
-    this.setAlert("success", "Success", "Operation completed!" + extra);
+    this.addToastPopup((<>
+      <p>Successfully performed operation!</p>
+      <Button onClick={() => window.location.reload()} size="sm">Reload</Button>
+      </>), "success");
+    // this.setAlert("success", "Success", "Operation completed!" + extra);
   }
 
   onOperationFailed(err) {
     const reason = err ? ` Reason: ${err}` : "";
-    console.trace(err)
-    this.setAlert("danger", "Failure", "Operation failed!" + reason);
+    if (err.response && err.response.data) {
+      this.addToastPopup((<>
+        <strong className="my-1">Operation failed with error: </strong>
+        <p className="my-1" style={{
+          wordBreak: "break-word"
+        }}>{err.response.data.message}</p>
+      </>), "danger")
+    }
+
+    // this.setAlert("danger", "Failure", "Operation failed!" + reason);
   }
 
   setListFromPage(page) {
@@ -329,9 +347,13 @@ export default class BaseMainForm extends React.Component {
         {this.state.alert ? this.state.alert : ""}
         {this.state.notifications && this.state.notifications.length > 0 ? 
           <ToastWrapper>{this.state.notifications}</ToastWrapper> : ""}
-        {this.renderTitle()}
-        <br />
-        {this.renderTopButtons()}
+        {this.props.compact === true ? "" :
+          <>
+            {this.renderTitle()}
+            <br />
+            {this.renderTopButtons()}
+          </>
+        }
         <br />
         {this.state.viewType === "browse" ? this.renderListView() : this.renderForm()}
         <br />
