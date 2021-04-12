@@ -19,7 +19,8 @@ export default class BaseForm extends React.Component {
   }
 
   renderObject(propPath) {
-    const keys = propPath.split(".");
+    const realPropPath = propPath.replace("Id", ".id");
+    const keys = realPropPath.split(".");
     let prop = this.props;
     for (let key of keys) {
       try {

@@ -84,6 +84,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleRuntimeException(
             RuntimeException ex, WebRequest request) {
         Throwable cause = ex.getCause();
+        cause.printStackTrace();
         if (cause == null) return handleExceptionInternal(
                 ex, new Object(), new HttpHeaders(),
                 HttpStatus.INTERNAL_SERVER_ERROR, request);

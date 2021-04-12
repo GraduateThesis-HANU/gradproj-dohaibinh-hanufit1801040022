@@ -11,6 +11,7 @@ export default class {{ view.name.main }} extends BaseMainForm {
       ...this.state,
       current: {
         ...this.state.current,
+        ...this.props.current,
         type: this.getPossibleTypes.bind(this)() ? this.getPossibleTypes()[0] : undefined
       }
     }
@@ -35,7 +36,7 @@ export default class {{ view.name.main }} extends BaseMainForm {
   }
 
   renderForm() {
-    return <{{ view.name.form }} {...this.state} {...this.props}
+    return <{{ view.name.form }} {...this.props} {...this.state}
       handleStateChange={this.handleStateChange.bind(this)}
       handleTypeChange={(e) => this.setState({ current: {...this.state.current, type: e.target.value} })} />;
   }

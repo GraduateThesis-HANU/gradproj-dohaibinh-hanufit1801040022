@@ -172,7 +172,7 @@ public class FormGenerator implements ViewGenerator {
                 "\tpartialApplyWithCallbacks={this.partialApplyWithCallbacks} />" +
                 "</>}";
         return template
-                .replace("{{ view.parent }}", this.parent)
+                .replace("{{ view.parent }}", lowerFirstChar(this.domainTypeName))
                 .replace("{{ view.submodule.name }}", simpleName.concat("Submodule"))
                 .replace("{{ view.submodule.title }}", "Manage ".concat(simpleName));
     }
@@ -323,7 +323,7 @@ public class FormGenerator implements ViewGenerator {
         selectOptionField
                 .append(String.format(
                         "  <Form.Control as=\"select\" " +
-                                "value={this.renderObject('this.props.current.%s')} " +
+                                "value={this.renderObject('current.%s')} " +
                                 onChange +
                                 (isTypeSelect ? "disabled={this.props.viewType !== \"create\"} " : "") +
                                 "custom>",

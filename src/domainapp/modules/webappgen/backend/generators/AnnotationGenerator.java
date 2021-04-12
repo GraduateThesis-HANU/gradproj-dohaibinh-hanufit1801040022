@@ -156,6 +156,7 @@ final class AnnotationGenerator {
     }
 
     private static boolean isDefinedTypeField(Field f) {
+        if (f.getType().isEnum()) return false;
         Type type = f.getGenericType();
         Class<?> declaringType = f.getDeclaringClass();
         String rootPackage = PackageUtils.basePackageOf(declaringType);

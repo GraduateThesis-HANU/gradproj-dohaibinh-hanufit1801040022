@@ -1,5 +1,6 @@
 package examples.domainapp.modules.webappgen.backend.services.student.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,9 +11,15 @@ import domainapp.basics.model.meta.DAssoc.AssocType;
 import domainapp.basics.model.meta.DAssoc.Associate;
 import domainapp.basics.model.meta.DAttr.Type;
 import domainapp.basics.util.Tuple;
+import domainapp.basics.util.events.ChangeEventSource;
+import domainapp.modules.domevents.CMEventType;
+import domainapp.modules.domevents.EventType;
+import domainapp.modules.domevents.Publisher;
+import domainapp.modules.domevents.Subscriber;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 /**
  * A domain class whose objects are city names. This class is used as
@@ -27,7 +34,7 @@ import java.util.Date;
  *
  */
 @DClass(schema="courseman")
-public class Address {
+public class Address implements Subscriber, Publisher {
 
   public static final String A_name = "name";
 
@@ -63,6 +70,9 @@ public class Address {
   public Address(@AttrRef("id") Integer id, @AttrRef("name") String name) {
     this(id, name, null);
   }
+
+  @JsonIgnore
+  private ChangeEventSource eventSource;
 
   private Address() {
       this.id = nextId(null);
@@ -127,16 +137,55 @@ public class Address {
 
   @DOpt(type=DOpt.Type.LinkAdderNew)
   public void setNewStudent(Student student) {
-    this.student = student;
+    setStudent(student);
     // do other updates here (if needed)
   }
 
   public void setStudent(Student student) {
+    if (student != null && student.equals(this.student)) return;
+    removeSubcriber(this.student);
     this.student = student;
+    addSubscriber(this.student, CMEventType.values());
+    notify(CMEventType.OnCreated, getEventSource());
   }
 
   @Override
   public String toString() {
     return name;
+  }
+
+  @Override
+  @JsonIgnore
+  public ChangeEventSource getEventSource() {
+    if (eventSource == null) {
+      eventSource = createEventSource(getClass());
+    } else {
+      resetEventSource(eventSource);
+    }
+
+    return eventSource;
+  }
+
+  /**
+   * @effects
+   *  notify register all registered listeners
+   */
+  @Override
+  public void finalize() throws Throwable {
+    notify(CMEventType.OnRemoved, getEventSource());
+  }
+
+  @Override
+  public void handleEvent(EventType type, ChangeEventSource source) {
+    CMEventType eventType = (CMEventType) type;
+    List data = source.getObjects();
+    Object srcObj = data.get(0);
+    if (srcObj instanceof Student) {
+      switch (eventType) {
+        case OnCreated:
+          this.setNewStudent((Student) srcObj);
+          break;
+      }
+    }
   }
 }

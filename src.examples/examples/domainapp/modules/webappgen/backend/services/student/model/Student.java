@@ -1,5 +1,6 @@
 package examples.domainapp.modules.webappgen.backend.services.student.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.*;
 import domainapp.basics.model.meta.DAssoc.AssocEndType;
@@ -10,6 +11,7 @@ import domainapp.basics.util.Tuple;
 import domainapp.basics.util.events.ChangeEventSource;
 import domainapp.modules.domevents.CMEventType;
 import domainapp.modules.domevents.EventType;
+import domainapp.modules.domevents.Publisher;
 import domainapp.modules.domevents.Subscriber;
 import examples.domainapp.modules.webappgen.backend.exceptions.DExCode;
 import examples.domainapp.modules.webappgen.backend.services.enrolment.model.Enrolment;
@@ -26,7 +28,7 @@ import java.util.*;
  * @version 2.0
  */
 @DClass(schema="courseman")
-public class Student implements Subscriber {
+public class Student implements Subscriber, Publisher {
   public static final String A_name = "name";
   public static final String A_gender = "gender";
   public static final String A_id = "id";
@@ -80,8 +82,11 @@ public class Student implements Subscriber {
   // v2.6.4b: derived: average of the final mark of all enrolments
   private double averageMark;
 
+  @JsonIgnore
+  private ChangeEventSource eventSource;
+
   private Student() {
-      enrolments = new ArrayList<>();
+      enrolments = new HashSet<>();
       this.id = nextID(null);
   }
 
@@ -150,7 +155,11 @@ public class Student implements Subscriber {
   }
 
   public void setAddress(Address address) {
+    if (address != null && address.equals(this.address)) return;
+    removeSubcriber(this.address);
     this.address = address;
+    addSubscriber(address, CMEventType.values());
+    notify(CMEventType.OnCreated, getEventSource());
   }
 
   // v2.7.3
@@ -479,6 +488,33 @@ public class Student implements Subscriber {
           this.removeEnrolment(enrolment);
           break;
       }
+    } else if (srcObj instanceof Address) {
+      switch (eventType) {
+        case OnCreated:
+          this.setNewAddress((Address) srcObj);
+          break;
+      }
     }
+  }
+
+  @Override
+  @JsonIgnore
+  public ChangeEventSource getEventSource() {
+    if (eventSource == null) {
+      eventSource = createEventSource(getClass());
+    } else {
+      resetEventSource(eventSource);
+    }
+
+    return eventSource;
+  }
+
+  /**
+   * @effects
+   *  notify register all registered listeners
+   */
+  @Override
+  public void finalize() throws Throwable {
+    notify(CMEventType.OnRemoved, getEventSource());
   }
 }

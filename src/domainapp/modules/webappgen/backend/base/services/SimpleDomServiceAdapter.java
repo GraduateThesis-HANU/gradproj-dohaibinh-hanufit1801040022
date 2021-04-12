@@ -16,9 +16,8 @@ import domainapp.softwareimpl.SoftwareImpl;
 import vn.com.courseman.model.basic.Enrolment;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.lang.reflect.Modifier;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,7 +78,11 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
     @Override
     public T getEntityById(Identifier<?> id) {
         try {
-            return sw.retrieveObjectById(type, id.getId());
+            T retrieved = sw.retrieveObjectById(type, id.getId());
+            try {
+                sw.loadAssociatedObjects(retrieved);
+            } catch (NullPointerException ex) { }
+            return retrieved;
         } catch (NotFoundException | DataSourceException e) {
             throw new RuntimeException(e);
         }
@@ -111,21 +114,71 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
     @Override
     public Collection<T> getAllEntities() {
         try {
-            return sw.retrieveObjects(type, "id", Op.GT, "0");
+            Collection<T> entities = sw.retrieveObjects(type, "id", Op.GT, "0");
+            if (entities == null) entities = new ArrayList<>();
+            for (T entity : entities) {
+                try {
+                    sw.loadAssociatedObjects(entity);
+                } catch (NullPointerException ex) { }
+            }
+            return entities;
         } catch (NotFoundException | DataSourceException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static String[] getFieldNames(Class cls, Class... superClasses) {
+        List<Field> fields = new ArrayList<>();
+        fields.addAll(List.of(cls.getDeclaredFields()));
+        fields.addAll(List.of(superClasses[0].getDeclaredFields()));
+
+        List<String> fieldNames = fields.stream()
+                .filter(field -> !Modifier.isStatic(field.getModifiers())
+                    && Modifier.isPrivate(field.getModifiers()))
+                .filter(field -> field.isAnnotationPresent(DAttr.class))
+                .map(field -> field.getAnnotation(DAttr.class))
+                .filter(attr -> !attr.id() && !attr.auto() && !attr.virtual())
+                .map(DAttr::name)
+                .collect(Collectors.toList());
+        return fieldNames.toArray(new String[fieldNames.size()]);
+    }
+
+    private static <T> Object[] getFieldValues(Class<T> cls, Class<T> superClass, String[] fieldNames, T o) {
+
+        return List.of(fieldNames)
+                .stream()
+                .map(name -> {
+                    try {
+                        Field field = cls.getDeclaredField(name);
+                        field.setAccessible(true);
+                        return field.get(o);
+                    } catch (NoSuchFieldException | IllegalAccessException e) {
+//                        e.printStackTrace();
+                        try {
+                            Field field = superClass.getDeclaredField(name);
+                            field.setAccessible(true);
+                            return field.get(o);
+                        } catch (NoSuchFieldException | IllegalAccessException ex) {
+                            return null;
+                        }
+                    }
+                })
+                .toArray();
     }
 
     @Override
     public T updateEntity(Identifier<?> id, T entity) {
         try {
             validateObject(entity, sw);
-            if (!id.getId().equals(
-                IdentifierUtils.getIdField(getType()).get(entity))) return null;
-            sw.updateObject(type, entity);
-            sw.loadObjects(getType()); // reload from db
-            return entity;
+            if (!id.getId().toString().equals(
+                IdentifierUtils.getIdField(getType()).get(entity).toString())) return null;
+            Class<T> entityClass = (Class)entity.getClass();
+            T oldEntity = sw.retrieveObjectById(entityClass, id.getId());
+            String[] fieldNames = getFieldNames(entityClass, type);
+            Object[] values = getFieldValues(entityClass, type, fieldNames, entity);
+            sw.updateObject(entityClass, oldEntity, fieldNames, values);
+            sw.loadObjects(entityClass); // reload from db
+            return sw.retrieveObjectById(entityClass, id.getId());
         } catch (NotPossibleException | NotFoundException
                 | DataSourceException | IllegalArgumentException
                 | IllegalAccessException e) {

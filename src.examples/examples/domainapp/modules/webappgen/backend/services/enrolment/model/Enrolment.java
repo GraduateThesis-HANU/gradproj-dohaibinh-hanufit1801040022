@@ -220,8 +220,12 @@ public class Enrolment implements Comparable, Publisher {
     } else {
       if (finalMark != null)
         return finalMark;
-      else
-        return 0;
+      else {
+        if (internalMark != null && examMark != null) {
+          updateFinalMark();
+        }
+        return finalMark != null ? finalMark : 0;
+      }
     }
 
   }

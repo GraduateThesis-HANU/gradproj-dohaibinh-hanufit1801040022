@@ -60,7 +60,7 @@ public abstract class DefaultNestedRestfulController<T1, T2>
                 field.setAccessible(true);
                 Object current = field.get(requestBody);
                 if (current.getClass().equals(outer.getClass())) {
-                    outer = (T1)current;
+                    current = outer;
                 }
                 Class currentClass = current.getClass().getSuperclass() != Object.class ?
                         current.getClass().getSuperclass() : current.getClass();

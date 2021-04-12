@@ -82,7 +82,7 @@ export default class BaseMainForm extends React.Component {
   }
   
   getCreateHandler() {
-    if (this.props.parent) {
+    if (this.props.parent && this.props.parentName !== '') {
       const fn = this.partialApplyWithCallbacks(this.props.parentAPI.createInner);
       const objectNamePlural = this.props.mainAPI.objectNamePlural;
       const parentId = this.props.parentId;
@@ -98,12 +98,14 @@ export default class BaseMainForm extends React.Component {
   }
 
   handleSubmit() {
+    console.log(this.state);
+    console.log(this.props);
     const createUsing = this.getCreateHandler();
     const updateUsing = this.partialApplyWithCallbacks(this.props.mainAPI.updateById)
     if (this.state.viewType === "create" 
-      || !this.state.currentId || this.state.currentId === "") {
+      || this.state.currentId === "") {
       createUsing([this.state.current]);
-    } else if (this.state.viewType === "details") {
+    } else if (this.state.viewType === "details" || this.props.mode === "submodule") {
       updateUsing([this.state.currentId, this.state.current]);
     }
   }
@@ -150,7 +152,8 @@ export default class BaseMainForm extends React.Component {
     this.setState(newState, onDone);
   }
   renderObject(propPath) {
-    const keys = propPath.split(".");
+    const realPropPath = propPath.replace("Id", ".id");
+    const keys = realPropPath.split(".");
     let prop = this.props;
     for (let key of keys) {
       try {
@@ -180,7 +183,7 @@ export default class BaseMainForm extends React.Component {
       return this.retrieveObjectById(propName, id, onSuccess, onFailure);
     } else {
       const actualName = name.replace(".id", "").replace("current.", "");
-      console.log(actualName)
+      console.log(actualName);
       this.props[actualName + "API"].getById([id, onSuccess, onFailure]);
     }
   }
@@ -207,7 +210,7 @@ export default class BaseMainForm extends React.Component {
     })
   }
   // content: simple message string or JSX component
-  addToastPopup(content, style, onClick, header="App Notification", timeout=100000) {
+  addToastPopup(content, style, onClick, header="App Notification", timeout=10000) {
     const notiList = this.state.notifications ? this.state.notifications : [];
     const index = notiList.length;
     this.setState({

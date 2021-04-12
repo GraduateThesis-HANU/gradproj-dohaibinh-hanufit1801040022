@@ -18,6 +18,7 @@ import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.
 import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.CourseModule;
 import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.ElectiveModule;
 import examples.domainapp.modules.webappgen.backend.services.enrolment.model.Enrolment;
+import examples.domainapp.modules.webappgen.backend.services.sclass.model.SClass;
 import examples.domainapp.modules.webappgen.backend.services.student.model.Address;
 import examples.domainapp.modules.webappgen.backend.services.student.model.Student;
 import org.joor.Reflect;
@@ -72,7 +73,8 @@ public class SpringApp {
             ElectiveModule.class,
             Enrolment.class,
             Student.class,
-            Address.class
+            Address.class,
+            SClass.class
     };
     private static final List<Class> generatedClasses = new ArrayList<>();
     private static SoftwareImpl sw;
