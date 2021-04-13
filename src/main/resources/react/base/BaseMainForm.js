@@ -103,7 +103,7 @@ export default class BaseMainForm extends React.Component {
     const createUsing = this.getCreateHandler();
     const updateUsing = this.partialApplyWithCallbacks(this.props.mainAPI.updateById)
     if (this.state.viewType === "create" 
-      || this.state.currentId === "") {
+      || this.state.currentId === "" || !this.state.currentId) {
       createUsing([this.state.current]);
     } else if (this.state.viewType === "details" || this.props.mode === "submodule") {
       updateUsing([this.state.currentId, this.state.current]);
@@ -129,6 +129,7 @@ export default class BaseMainForm extends React.Component {
           (result) => {
             newState["current"] = {...this.state.current};
             newState["current"][shortName] = result;
+            console.log(newState)
             this.setState(newState, onDone);
           },
           () => {
@@ -183,8 +184,11 @@ export default class BaseMainForm extends React.Component {
       return this.retrieveObjectById(propName, id, onSuccess, onFailure);
     } else {
       const actualName = name.replace(".id", "").replace("current.", "");
-      console.log(actualName);
-      this.props[actualName + "API"].getById([id, onSuccess, onFailure]);
+      const actualAPIName = Object.keys(this.props)
+                                  .filter(key => key.includes("API"))
+                                  .filter(key => key.toLocaleLowerCase()
+                                    .includes(actualName.toLocaleLowerCase()))[0];
+      this.props[actualAPIName].getById([id, onSuccess, onFailure]);
     }
   }
 

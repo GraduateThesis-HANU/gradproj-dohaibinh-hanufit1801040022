@@ -19,8 +19,7 @@ export default class BaseForm extends React.Component {
   }
 
   renderObject(propPath) {
-    const realPropPath = propPath.replace("Id", ".id");
-    const keys = realPropPath.split(".");
+    const keys = propPath.split(".");
     let prop = this.props;
     for (let key of keys) {
       try {
@@ -28,6 +27,10 @@ export default class BaseForm extends React.Component {
       } catch (err) {
         return this._renderObject(undefined);
       }
+    }
+    if (propPath.includes("Id")) {
+      const idFromObj = this.renderObject(propPath.replace("Id", ".id"));
+      if (idFromObj !== "") return idFromObj;
     }
     return this._renderObject(prop);
   }
