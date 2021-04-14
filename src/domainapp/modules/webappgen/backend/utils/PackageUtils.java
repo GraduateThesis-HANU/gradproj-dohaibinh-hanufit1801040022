@@ -10,4 +10,26 @@ public final class PackageUtils {
             .sorted()
             .findFirst().orElse("");
     }
+
+    static String getShortBaseModulePackage(Class<?> modelClass) {
+        String[] parts = modelClass.getPackageName()
+                .replace(".models", "")
+                .replace(".model", "")
+                .trim()
+                .split("\\.");
+        return parts[parts.length - 1];
+    }
+
+    static String getBaseModulePackage(Class<?> modelClass) {
+        return modelClass.getPackageName()
+                .replace(".models", "")
+                .replace(".model", "")
+                .trim();
+    }
+
+    public static String actualOutputPathOf(String outputPackage, Class<?> modelClass) {
+        return outputPackage != null ?
+                outputPackage.concat(".").concat(getShortBaseModulePackage(modelClass))
+                : PackageUtils.getBaseModulePackage(modelClass);
+    }
 }

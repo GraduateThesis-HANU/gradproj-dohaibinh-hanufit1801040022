@@ -87,6 +87,7 @@ public class JaxRsApp {
         WebServiceGenerator generator = new WebServiceGenerator(
                 TargetType.SPRING,
                 GenerationMode.SOURCE_CODE,
+                "examples.domainapp.modules.webappgen.backend.services",
                 "/Users/binh_dh/Documents/generated");
         generator.setGenerateCompleteCallback(generatedClasses -> {
             sw = SoftwareFactory.createDefaultDomSoftware();

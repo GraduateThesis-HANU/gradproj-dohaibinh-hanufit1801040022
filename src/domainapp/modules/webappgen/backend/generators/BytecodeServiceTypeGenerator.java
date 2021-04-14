@@ -5,6 +5,7 @@ import domainapp.modules.webappgen.backend.utils.NamingUtils;
 import domainapp.modules.webappgen.backend.base.services.CrudService;
 import domainapp.modules.webappgen.backend.base.services.InheritedDomServiceAdapter;
 import domainapp.modules.webappgen.backend.base.services.SimpleDomServiceAdapter;
+import domainapp.modules.webappgen.backend.utils.PackageUtils;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.dynamic.DynamicType.Builder;
@@ -24,25 +25,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static net.bytebuddy.description.annotation.AnnotationDescription.Builder.ofType;
 
+/**
+ * @author binh_dh
+ */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 final class BytecodeServiceTypeGenerator implements ServiceTypeGenerator {
-    private static ServiceTypeGenerator INSTANCE;
-
-    public static ServiceTypeGenerator instance() {
-        if (INSTANCE == null) {
-            INSTANCE = new BytecodeServiceTypeGenerator();
-        }
-        return INSTANCE;
-    }
 
     private static final Class crudServiceClass = CrudService.class;
     private static final Class absCrudServiceClass = SimpleDomServiceAdapter.class;
     private static final Class absInheritedCrudServiceClass = InheritedDomServiceAdapter.class;
 
     private final Map<String, Class<?>> generatedServices;
+    private final String outputPackage;
 
-    private BytecodeServiceTypeGenerator() {
+    BytecodeServiceTypeGenerator(String outputPackage) {
         generatedServices = new ConcurrentHashMap<>();
+        this.outputPackage = outputPackage;
     }
 
     /**
@@ -57,8 +55,10 @@ final class BytecodeServiceTypeGenerator implements ServiceTypeGenerator {
                 generatedServices.get(genericTypeName);
         }
 
-        final String name = NamingUtils.classNameFrom(type.getPackageName().replace(".model", ""),
-                                crudServiceClass, "Service", type);
+        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, type);
+
+        final String name = NamingUtils.classNameFrom(
+                pkg, crudServiceClass, "Service", type);
 
         final String simpleName = type.getName();
 
@@ -144,9 +144,5 @@ final class BytecodeServiceTypeGenerator implements ServiceTypeGenerator {
         static void exit(@Advice.This InheritedDomServiceAdapter instance) {
             instance.setSubtypes(InheritanceUtils.getSubtypeMapFor(instance.getType()));
         }
-    }
-
-    public static Class getServiceTypeOf(Class<?> cls) {
-        return instance().generateAutowiredServiceType(cls);
     }
 }

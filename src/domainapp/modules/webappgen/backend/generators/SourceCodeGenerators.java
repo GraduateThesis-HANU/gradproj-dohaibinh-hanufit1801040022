@@ -32,13 +32,13 @@ import java.util.stream.Stream;
 
 public class SourceCodeGenerators {
     public static CompilationUnit generateDefaultGenericInherited(
+            String basePackage,
             Class superClass, Class superInterface, Class... genericTypes) {
         final Class genericType = genericTypes[0];
         final String name = NamingUtils.classNameFrom("",
                 superInterface, "Service", genericType)
                 .replace(superInterface.getSimpleName(), "")
                 .replace("$", "");
-        final String genericTypeName = genericType.getSimpleName();
 
         CompilationUnit compilationUnit = new CompilationUnit();
         ClassOrInterfaceDeclaration classDeclaration =
@@ -46,9 +46,7 @@ public class SourceCodeGenerators {
 
         // package declaration
         compilationUnit.setPackageDeclaration(
-                new PackageDeclaration(
-                        new Name(genericType.getPackage().getName()
-                                .replace(".model", ""))));
+                new PackageDeclaration(new Name(basePackage)));
 
         // extend superclass
         ClassOrInterfaceType extendedType = JavaParser

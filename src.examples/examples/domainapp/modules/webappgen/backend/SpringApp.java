@@ -88,6 +88,7 @@ public class SpringApp {
         WebServiceGenerator generator = new WebServiceGenerator(
                 TargetType.SPRING,
                 GenerationMode.SOURCE_CODE,
+                "examples.domainapp.modules.webappgen.backend.services",
                 "/Users/binh_dh/Documents/generated");
         generator.setGenerateCompleteCallback(_generatedClasses -> {
             generatedClasses.addAll(_generatedClasses);

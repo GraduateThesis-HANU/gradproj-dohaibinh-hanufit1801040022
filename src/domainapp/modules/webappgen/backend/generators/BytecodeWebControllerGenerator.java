@@ -1,6 +1,5 @@
 package domainapp.modules.webappgen.backend.generators;
 
-import domainapp.modules.webappgen.backend.utils.IdentifierUtils;
 import domainapp.modules.webappgen.backend.utils.NamingUtils;
 import domainapp.modules.webappgen.backend.annotations.NestedResourceController;
 import domainapp.modules.webappgen.backend.annotations.bridges.AnnotationRep;
@@ -8,7 +7,7 @@ import domainapp.modules.webappgen.backend.annotations.bridges.RestAnnotationAda
 import domainapp.modules.webappgen.backend.annotations.bridges.TargetType;
 import domainapp.modules.webappgen.backend.base.controllers.*;
 import domainapp.modules.webappgen.backend.svcdesc.ServiceController;
-import domainapp.modules.webappgen.backend.utils.GenericTypeUtils;
+import domainapp.modules.webappgen.backend.utils.PackageUtils;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -62,15 +61,23 @@ class BytecodeWebControllerGenerator implements WebControllerGenerator {
 
     private final Map<String, Class<?>> generatedCrudClasses;
     private final RestAnnotationAdapter annotationAdapter;
+    private final String outputPackage;
 
     private BytecodeWebControllerGenerator() {
         generatedCrudClasses = new HashMap<>();
         annotationAdapter = RestAnnotationAdapter.adaptTo(TargetType.SPRING);
+        outputPackage = null;
     }
 
-    BytecodeWebControllerGenerator(TargetType targetType) {
-        generatedCrudClasses = new HashMap<>();
-        annotationAdapter = RestAnnotationAdapter.adaptTo(targetType);
+    BytecodeWebControllerGenerator(TargetType targetType, String outputPackage) {
+        this.generatedCrudClasses = new HashMap<>();
+        this.annotationAdapter = RestAnnotationAdapter.adaptTo(targetType);
+        this.outputPackage = outputPackage;
+    }
+
+    @Override
+    public RestAnnotationAdapter getAnnotationAdapter() {
+        return annotationAdapter;
     }
 
     /**
@@ -80,9 +87,7 @@ class BytecodeWebControllerGenerator implements WebControllerGenerator {
         try {
             String typeName = type.getName();
             if (!generatedCrudClasses.containsKey(typeName)) {
-                Class<?> idType = (Class<?>) GenericTypeUtils
-                        .getWrapperClass(IdentifierUtils.getIdField(type).getType());
-                generatedCrudClasses.put(typeName, generateRestfulController(type, idType));
+                generatedCrudClasses.put(typeName, generateRestfulController(type));
             }
             return (Class<RestfulController<T>>) generatedCrudClasses.get(typeName);
         } catch (IllegalAccessException | IOException | NoSuchMethodException ex) {
@@ -103,7 +108,7 @@ class BytecodeWebControllerGenerator implements WebControllerGenerator {
     }
 
     // Name cannot have more than 1 '$' token
-    private <T> Class<RestfulController<T>> generateRestfulController(Class<T> type, Class<?> idType)
+    private <T> Class<RestfulController<T>> generateRestfulController(Class<T> type)
             throws IllegalAccessException, IOException, NoSuchMethodException, SecurityException {
         //
         final boolean hasInheritance = Modifier.isAbstract(type.getModifiers());
@@ -111,7 +116,7 @@ class BytecodeWebControllerGenerator implements WebControllerGenerator {
         final Class<RestfulController> baseClass = hasInheritance ? inheritRestCtrlClass : restCtrlClass;
         final Inflector inflector = Inflector.getInstance();
         final String endpoint = "/" + inflector.underscore(inflector.pluralize(type.getSimpleName())).replace("_", "-");
-        final String pkg = type.getPackage().getName().replace(".model", "");
+        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, type);
         final String name = NamingUtils.classNameFrom(pkg, restCtrlClass, "Controller", type);
         Builder<RestfulController> builder = generateControllerType(baseClass, baseImplClass, name, endpoint, type)
                 .annotateType(ofType(ServiceController.class).define("endpoint", endpoint).define("name",
@@ -156,37 +161,6 @@ class BytecodeWebControllerGenerator implements WebControllerGenerator {
         return builder.build();
     }
 
-    private List<AnnotationRep> adaptAnnotations(Annotation[] annotations, String className) {
-        List<AnnotationRep> adaptedAnnotations = new LinkedList<>();
-        for (Annotation ann : annotations) {
-            List<AnnotationRep> annReps = adaptAnnotation(ann, className);
-            if (annReps == null)
-                continue;
-            adaptedAnnotations.addAll(annReps);
-        }
-        return adaptedAnnotations;
-    }
-
-    private List<AnnotationRep> adaptAnnotation(Annotation ann, String className) {
-        String _name = className == null ? "" : className.substring(className.lastIndexOf("$") + 1);
-        _name = _name.replace("Controller", "");
-        _name = Inflector.getInstance().underscore(_name).replace("_", "-");
-
-        Class<Annotation> annType = (Class) ann.annotationType();
-        AnnotationRep annRep = new AnnotationRep(annType);
-        for (Method m : annType.getDeclaredMethods()) {
-            try {
-                annRep.setValueOf(m.getName(), m.invoke(ann));
-            } catch (IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        annRep.setValueOf("declaredOn", className);
-        this.annotationAdapter.addSourceAnnotation(annRep);
-        return annotationAdapter.getTargetAnnotations(annType);
-    }
-
     private <T> Builder<T> adaptAnnotationsOnBuilder(Builder<T> builder, Class baseClass, String currentName) {
         for (Method m : baseClass.getMethods()) {
             List<AnnotationDescription> adaptedAnnotations =
@@ -223,7 +197,7 @@ class BytecodeWebControllerGenerator implements WebControllerGenerator {
         final String endpoint =
             "/" + inflector.underscore(inflector.pluralize(outerType.getSimpleName())).replace("_", "-")
                 + "/{id}/" + inflector.underscore(inflector.pluralize(innerType.getSimpleName())).replace("_", "-");
-        final String pkg = outerType.getPackage().getName().replace(".model", "");
+        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, outerType);
         final String name = NamingUtils.classNameFrom(pkg, nestedRestCtrlClass, "Controller", outerType, innerType);
 
         final Class<NestedRestfulController> baseClass = nestedRestCtrlClass;

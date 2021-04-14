@@ -17,10 +17,7 @@ import domainapp.modules.webappgen.backend.annotations.bridges.AnnotationRep;
 import domainapp.modules.webappgen.backend.annotations.bridges.RestAnnotationAdapter;
 import domainapp.modules.webappgen.backend.annotations.bridges.TargetType;
 import domainapp.modules.webappgen.backend.base.controllers.*;
-import domainapp.modules.webappgen.backend.utils.GenericTypeUtils;
-import domainapp.modules.webappgen.backend.utils.IdentifierUtils;
-import domainapp.modules.webappgen.backend.utils.NamingUtils;
-import domainapp.modules.webappgen.backend.utils.OutputPathUtils;
+import domainapp.modules.webappgen.backend.utils.*;
 import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.CourseModule;
 import examples.domainapp.modules.webappgen.backend.services.enrolment.model.Enrolment;
 import examples.domainapp.modules.webappgen.backend.services.student.model.Student;
@@ -41,6 +38,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+/**
+ * @author binh_dh
+ */
 final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
     private static final Class<RestfulController> restCtrlClass = RestfulController.class;
     private static final Class<RestfulController> restCtrlClassImpl = (Class) DefaultRestfulController.class;
@@ -52,16 +52,22 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
 
     private final Map<String, Class<?>> generatedCrudClasses;
     private final RestAnnotationAdapter annotationAdapter;
+    private final String outputPackage;
     private final String outputFolder;
 
-    SourceCodeWebControllerGenerator(String outputFolder) {
-        this(TargetType.SPRING, outputFolder);
+    SourceCodeWebControllerGenerator(String outputPackage, String outputFolder) {
+        this(TargetType.SPRING, outputPackage, outputFolder);
     }
 
-    SourceCodeWebControllerGenerator(TargetType targetType, String outputFolder) {
+    SourceCodeWebControllerGenerator(TargetType targetType, String outputPackage, String outputFolder) {
         generatedCrudClasses = new HashMap<>();
         annotationAdapter = RestAnnotationAdapter.adaptTo(targetType);
         this.outputFolder = outputFolder;
+        if (outputPackage.endsWith("controllers")) {
+            this.outputPackage = outputPackage;
+        } else {
+            this.outputPackage = outputPackage.concat(".controllers");
+        }
     }
 
     @Override
@@ -86,6 +92,11 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         }
     }
 
+    @Override
+    public RestAnnotationAdapter getAnnotationAdapter() {
+        return annotationAdapter;
+    }
+
     private <T1, T2> Class<NestedRestfulController<T1,T2>> generateNestedRestfulController(
             Class<T1> outerType, Class<T2> innerType) {
         //
@@ -93,7 +104,7 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         final String endpoint =
                 "/" + inflector.underscore(inflector.pluralize(outerType.getSimpleName())).replace("_", "-")
                         + "/{id}/" + inflector.underscore(inflector.pluralize(innerType.getSimpleName())).replace("_", "-");
-        final String pkg = outerType.getPackage().getName().replace(".model", "");
+        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, outerType);
         final String name = NamingUtils.classNameFrom(pkg, nestedRestCtrlClass, "Controller", outerType, innerType)
                 .replace("NestedRestfulController$", "");
 
@@ -101,7 +112,7 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         final Class<NestedRestfulController> baseImplClass = nestedRestCtrlImplClass;
 
         final CompilationUnit compilationUnit = SourceCodeGenerators.generateDefaultGenericInherited(
-                baseImplClass, baseClass, outerType, innerType
+                pkg, baseImplClass, baseClass, outerType, innerType
         );
 
         final ClassOrInterfaceDeclaration classDeclaration =
@@ -142,12 +153,12 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         final Class<RestfulController> baseClass = hasInheritance ? inheritRestCtrlClass : restCtrlClass;
         final Inflector inflector = Inflector.getInstance();
         final String endpoint = "/" + inflector.underscore(inflector.pluralize(type.getSimpleName())).replace("_", "-");
-        final String pkg = type.getPackage().getName().replace(".model", "");
+        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, type);
         final String name = NamingUtils.classNameFrom("", restCtrlClass, "Controller", type)
                 .replace("RestfulController$", "");
 
         final CompilationUnit compilationUnit = SourceCodeGenerators.generateDefaultGenericInherited(
-                baseImplClass, baseClass, type
+                pkg, baseImplClass, baseClass, type
         );
 
         final ClassOrInterfaceDeclaration classDeclaration =
@@ -250,39 +261,13 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         }
         return classDeclaration;
     }
-
-    private List<AnnotationRep> adaptAnnotations(Annotation[] annotations, String className) {
-        List<AnnotationRep> adaptedAnnotations = new LinkedList<>();
-        for (Annotation ann : annotations) {
-            List<AnnotationRep> annReps = adaptAnnotation(ann, className);
-            if (annReps == null)
-                continue;
-            adaptedAnnotations.addAll(annReps);
-        }
-        return adaptedAnnotations;
-    }
-
-    private List<AnnotationRep> adaptAnnotation(Annotation ann, String className) {
-        Class<Annotation> annType = (Class) ann.annotationType();
-        AnnotationRep annRep = new AnnotationRep(annType);
-        for (Method m : annType.getDeclaredMethods()) {
-            try {
-                annRep.setValueOf(m.getName(), m.invoke(ann));
-            } catch (IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        annRep.setValueOf("declaredOn", className);
-        this.annotationAdapter.addSourceAnnotation(annRep);
-        return annotationAdapter.getTargetAnnotations(annType);
-    }
-
 }
 
 class TestSrcWebCtrlGen {
     public static void main(String[] args) {
-            WebControllerGenerator generator = new SourceCodeWebControllerGenerator("/Users/binh_dh/Documents/generated");
+            WebControllerGenerator generator = new SourceCodeWebControllerGenerator(
+                    "examples.domainapp.modules.webappgen.backend.controllers",
+                    "/Users/binh_dh/Documents/generated");
         System.out.println(generator.getRestfulController(Student.class));
         System.out.println(generator.getRestfulController(CourseModule.class));
         System.out.println(generator.getNestedRestfulController(Student.class, Enrolment.class));

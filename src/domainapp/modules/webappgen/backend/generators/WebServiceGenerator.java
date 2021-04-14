@@ -21,9 +21,12 @@ public class WebServiceGenerator {
     public WebServiceGenerator(
             TargetType targetType,
             GenerationMode generationMode,
+            String outputPackage,
             String outputPath) {
-        this.webControllerGenerator = WebControllerGenerator.getInstance(generationMode, targetType, outputPath);
-        this.serviceTypeGenerator = ServiceTypeGenerator.getInstance(generationMode, outputPath);
+        this.webControllerGenerator = WebControllerGenerator.getInstance(
+                generationMode, outputPackage, targetType, outputPath);
+        this.serviceTypeGenerator = ServiceTypeGenerator.getInstance(
+                generationMode, outputPackage, outputPath);
         this.annotationGenerator = AnnotationGenerator.instance();
 
         generatedControllerClasses = new LinkedList<>();

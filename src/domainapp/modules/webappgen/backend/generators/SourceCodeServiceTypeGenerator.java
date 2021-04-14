@@ -9,34 +9,43 @@ import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.BlockStmt;
-import com.github.javaparser.ast.stmt.ExplicitConstructorInvocationStmt;
 import domainapp.modules.webappgen.backend.base.services.CrudService;
 import domainapp.modules.webappgen.backend.base.services.InheritedDomServiceAdapter;
 import domainapp.modules.webappgen.backend.base.services.SimpleDomServiceAdapter;
 import domainapp.modules.webappgen.backend.utils.InheritanceUtils;
 import domainapp.modules.webappgen.backend.utils.OutputPathUtils;
-import examples.domainapp.modules.webappgen.backend.services.student.model.Student;
+import domainapp.modules.webappgen.backend.utils.PackageUtils;
 import examples.domainapp.modules.webappgen.backend.services.coursemodule.model.CourseModule;
+import examples.domainapp.modules.webappgen.backend.services.student.model.Student;
 import org.mdkt.compiler.InMemoryJavaCompiler;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Generated;
+import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
+/**
+ * @author binh_dh
+ */
 final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
     private static final Class crudServiceClass = CrudService.class;
     private static final Class absCrudServiceClass = SimpleDomServiceAdapter.class;
     private static final Class absInheritedCrudServiceClass = InheritedDomServiceAdapter.class;
 
+    private final String outputPackage;
     private final String outputFolder;
     private final Map<String, Class<?>> generatedServices;
 
-    SourceCodeServiceTypeGenerator(String outputFolder) {
+    SourceCodeServiceTypeGenerator(String outputPackage, String outputFolder) {
         generatedServices = new ConcurrentHashMap<>();
+        if (outputPackage.endsWith("services")) {
+            this.outputPackage = outputPackage;
+        } else {
+            this.outputPackage = outputPackage.concat(".services");
+        }
         this.outputFolder = outputFolder;
     }
 
@@ -53,12 +62,12 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
     }
 
     private <T> Class generateServiceType(Class<T> type, String genericTypeName) {
-        final boolean hasInherit = java.lang.reflect.Modifier.isAbstract(type.getModifiers());
+        final boolean hasInherit = Modifier.isAbstract(type.getModifiers());
         Class<CrudService> superClass = hasInherit ? absInheritedCrudServiceClass : absCrudServiceClass;
-
+        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, type);
         CompilationUnit serviceCompilationUnit =
                 SourceCodeGenerators.generateDefaultGenericInherited(
-                        superClass, crudServiceClass, type);
+                        pkg, superClass, crudServiceClass, type);
 
         ClassOrInterfaceDeclaration serviceClassDeclaration =
                 (ClassOrInterfaceDeclaration) serviceCompilationUnit.getTypes().get(0);
@@ -142,7 +151,9 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
 
 class TestSrcServiceTypeGen {
     public static void main(String[] args) {
-        ServiceTypeGenerator generator = new SourceCodeServiceTypeGenerator("/Users/binh_dh/Documents/generated");
+        ServiceTypeGenerator generator = new SourceCodeServiceTypeGenerator(
+                "examples.domainapp.modules.webappgen.backend.controllers",
+                "/Users/binh_dh/Documents/generated");
         System.out.println(generator.generateAutowiredServiceType(Student.class));
         System.out.println(generator.generateAutowiredServiceType(CourseModule.class));
     }
