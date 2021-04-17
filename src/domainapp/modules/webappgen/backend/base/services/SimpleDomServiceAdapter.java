@@ -186,7 +186,7 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
             Class<T> entityClass = (Class)entity.getClass();
             T oldEntity = sw.retrieveObjectById(entityClass, id.getId());
 
-            if (entity.equals(oldEntity)) return entity;
+            if (entity == oldEntity) return entity;
             String[] fieldNames = getFieldNames(entityClass, type);
             Object[] values = getFieldValues(entityClass, type, fieldNames, entity);
             sw.updateObject(entityClass, oldEntity, fieldNames, values);

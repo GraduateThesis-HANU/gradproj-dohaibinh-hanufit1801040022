@@ -98,8 +98,6 @@ export default class BaseMainForm extends React.Component {
   }
 
   handleSubmit() {
-    console.log(this.state);
-    console.log(this.props);
     const createUsing = this.getCreateHandler();
     const updateUsing = this.partialApplyWithCallbacks(this.props.mainAPI.updateById)
     if (this.state.viewType === "create" 
@@ -234,11 +232,11 @@ export default class BaseMainForm extends React.Component {
       this.setAlert("danger", "Message", result);
       return;
     }
-    const extra = result && !(result instanceof(Response)) ?
-        ` Affected: ${this._renderObject(result)}!` : "";
     // update UI somewhere here
     if (!(result instanceof(Response))) { // if not void
-      this.handleStateChange("current", result);
+      this.handleStateChange("current", result, false,
+        () => this.handleStateChange("currentId", result.id, false, 
+          () => this.handleStateChange("viewType", "details")));
     }
     // this.handleStateChange("currentId", "", true);
     this.addToastPopup((<>

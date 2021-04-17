@@ -1,5 +1,6 @@
 package examples.domainapp.modules.webappgen.backend.services.student.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.*;
@@ -85,16 +86,17 @@ public class Student implements Subscriber, Publisher {
   @JsonIgnore
   private ChangeEventSource eventSource;
 
-  private Student() {
-      enrolments = new HashSet<>();
-      this.id = nextID(null);
-  }
+//  private Student() {
+//      enrolments = new HashSet<>();
+//      this.id = nextID(null);
+//  }
 
   // constructor methods
   // for creating in the application
   // without SClass
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
   @DOpt(type=DOpt.Type.RequiredConstructor)
+  @JsonCreator
   public Student(@AttrRef("name") String name,
       @AttrRef("gender") Gender gender,
       @AttrRef("dob") Date dob,

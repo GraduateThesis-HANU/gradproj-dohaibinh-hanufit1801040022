@@ -25,7 +25,7 @@ public class ElectiveModule extends CourseModule {
 //      @AttrRef("deptName") String deptName) {
 //    this(null, null, name, semester, credits, deptName);
 //  }
-  public ElectiveModule() { super(); }
+//  public ElectiveModule() { super(); }
 
   // the order of the arguments must be this:
   // - super-class arguments first, then sub-class

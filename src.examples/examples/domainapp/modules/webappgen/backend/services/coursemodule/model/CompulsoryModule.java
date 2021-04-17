@@ -22,7 +22,7 @@ public class CompulsoryModule extends CourseModule {
 //      @AttrRef("semester") int semester, @AttrRef("credits") int credits) {
 //    this(null, null, name, semester, credits);
 //  }
-  public CompulsoryModule() { super(); }
+//  public CompulsoryModule() { super(); }
 
   // the order of the arguments must be this:
   // - super-class arguments first, then sub-class

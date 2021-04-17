@@ -59,7 +59,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.PropertyAccessor.FIELD;
 
 /**
- *
+ * @author binh_dh
  */
 @SpringBootApplication
 @ComponentScan(basePackages = {
@@ -143,17 +143,5 @@ public class SpringApp {
                 .modules(new ParameterNamesModule())
                 .serializationInclusion(JsonInclude.Include.NON_NULL);
                 //.configure(mapper);
-    }
-
-    @RestController
-    public static class xxx {
-        @Autowired
-        private RequestMappingHandlerMapping requestMappingHandlerMapping;
-
-        @RequestMapping( value = "/endpoints", method = RequestMethod.GET )
-        public Object getEndPointsInView()
-        {
-            return requestMappingHandlerMapping.getHandlerMethods().keySet();
-        }
     }
 }

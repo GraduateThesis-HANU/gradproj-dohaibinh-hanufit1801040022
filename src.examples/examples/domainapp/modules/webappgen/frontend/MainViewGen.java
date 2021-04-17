@@ -1,4 +1,4 @@
-package domainapp.modules.webappgen.frontend.examples;
+package examples.domainapp.modules.webappgen.frontend;
 
 import domainapp.modules.webappgen.frontend.SC1;
 import domainapp.modules.webappgen.frontend.examples.modules.ModuleMain;

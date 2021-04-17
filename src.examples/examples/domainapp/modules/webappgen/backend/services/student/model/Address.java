@@ -1,5 +1,6 @@
 package examples.domainapp.modules.webappgen.backend.services.student.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -55,6 +56,7 @@ public class Address implements Subscriber, Publisher {
   // from object form: Student is not included
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
   @DOpt(type=DOpt.Type.RequiredConstructor)
+  @JsonCreator
   public Address(@AttrRef("name") String name) {
     this(null, name, null);
   }
@@ -74,9 +76,9 @@ public class Address implements Subscriber, Publisher {
   @JsonIgnore
   private ChangeEventSource eventSource;
 
-  private Address() {
-      this.id = nextId(null);
-  }
+//  private Address() {
+//      this.id = nextId(null);
+//  }
 
   // based constructor (used by others)
   private Address(Integer id, String name, Student student) {
