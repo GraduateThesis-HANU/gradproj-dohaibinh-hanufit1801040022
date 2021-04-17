@@ -9,6 +9,7 @@ import domainapp.basics.exceptions.NotPossibleException;
 import domainapp.modules.webappgen.backend.annotations.bridges.TargetType;
 import domainapp.modules.webappgen.backend.base.controllers.RestfulController;
 import domainapp.modules.webappgen.backend.base.controllers.ServiceRegistry;
+import domainapp.modules.webappgen.backend.base.models.Identifier;
 import domainapp.modules.webappgen.backend.base.services.CrudService;
 import domainapp.modules.webappgen.backend.generators.GenerationMode;
 import domainapp.modules.webappgen.backend.generators.WebServiceGenerator;

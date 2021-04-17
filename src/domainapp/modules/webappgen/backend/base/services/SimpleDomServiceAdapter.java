@@ -3,7 +3,9 @@ package domainapp.modules.webappgen.backend.base.services;
 import domainapp.basics.controller.ControllerTk;
 import domainapp.basics.controller.helper.DataValidator;
 import domainapp.basics.exceptions.ConstraintViolationException;
+import domainapp.basics.model.meta.DAssoc;
 import domainapp.basics.model.meta.DAttr;
+import domainapp.basics.model.meta.DClass;
 import domainapp.modules.webappgen.backend.utils.IdentifierUtils;
 import domainapp.modules.webappgen.backend.base.models.Identifier;
 import domainapp.modules.webappgen.backend.base.models.Page;
@@ -13,11 +15,11 @@ import domainapp.basics.exceptions.NotFoundException;
 import domainapp.basics.exceptions.NotPossibleException;
 import domainapp.basics.model.query.Expression.Op;
 import domainapp.softwareimpl.SoftwareImpl;
-import vn.com.courseman.model.basic.Enrolment;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,6 +27,7 @@ import java.util.stream.Stream;
 public class SimpleDomServiceAdapter<T> implements CrudService<T> {
     protected final SoftwareImpl sw;
     protected Class<T> type;
+    protected BiConsumer<Identifier, Object> onCascadeUpdate;
 
     // autowired constructor
     protected SimpleDomServiceAdapter(SoftwareImpl sw) {
@@ -69,8 +72,16 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
         try {
             validateObject(entity, sw);
             sw.addObject((Class<T>) entity.getClass(), entity);
+
+            // cascade update
+            Class entityClass = entity.getClass();
+            String[] fieldNames = getFieldNames(entityClass, type);
+            Object[] values = getFieldValues(entityClass, type, fieldNames, entity);
+            performCascadeUpdate(values);
+
             return entity;
-        } catch (DataSourceException | ConstraintViolationException e) {
+        } catch (DataSourceException | ConstraintViolationException
+                | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -174,10 +185,14 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
                 IdentifierUtils.getIdField(getType()).get(entity).toString())) return null;
             Class<T> entityClass = (Class)entity.getClass();
             T oldEntity = sw.retrieveObjectById(entityClass, id.getId());
+
+            if (entity.equals(oldEntity)) return entity;
             String[] fieldNames = getFieldNames(entityClass, type);
             Object[] values = getFieldValues(entityClass, type, fieldNames, entity);
             sw.updateObject(entityClass, oldEntity, fieldNames, values);
-            sw.loadObjects(entityClass); // reload from db
+
+            performCascadeUpdate(values);
+
             return sw.retrieveObjectById(entityClass, id.getId());
         } catch (NotPossibleException | NotFoundException
                 | DataSourceException | IllegalArgumentException
@@ -186,14 +201,58 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
         }
     }
 
+    private void performCascadeUpdate(Object[] values) throws IllegalAccessException {
+        // cascade update
+        for (Object obj : values) {
+            if (obj == null) continue;
+            Class<?> cls = obj.getClass();
+            if (!cls.isAnnotationPresent(DClass.class)) continue;
+            Identifier identifier = null;
+            for (Field field : cls.getDeclaredFields()) {
+                if (!field.isAnnotationPresent(DAttr.class)) continue;
+                DAttr dAttr = field.getAnnotation(DAttr.class);
+                if (!dAttr.id()) continue;
+                field.setAccessible(true);
+                identifier = Identifier.fromString(field.get(obj).toString());
+            }
+            if (identifier == null) continue;
+            if (this.onCascadeUpdate != null) {
+                this.onCascadeUpdate.accept(identifier, obj);
+            }
+        }
+    }
+
     @Override
     public void deleteEntityById(Identifier<?> id) {
         try {
             T toDelete = sw.retrieveObjectById(type, id.getId());
+            Class entityClass = toDelete.getClass();
+            String[] fieldNames = getFieldNames(entityClass, type);
+            Object[] values = getFieldValues(entityClass, type, fieldNames, toDelete);
+
             sw.deleteObject(toDelete, type);
+            sw.getDom().getAssociates(toDelete, toDelete.getClass())
+                    .forEach(associate -> {
+                        System.out.println(associate.getAssociateObj());
+                        if (associate.getAssociationType() == DAssoc.AssocType.One2One) {
+                            try {
+                                sw.deleteObject(associate.getAssociateObj(), associate.getAssociateClass());
+                            } catch (DataSourceException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+            sw.deleteObject(toDelete, type);
+
+            // cascade update
+//            performCascadeUpdate(values);
         } catch (DataSourceException e) {
             throw new RuntimeException(e);
         }
     }
 
+    @Override
+    public void setOnCascadeUpdate(BiConsumer<Identifier, Object> handler) {
+        this.onCascadeUpdate = handler;
+    }
 }

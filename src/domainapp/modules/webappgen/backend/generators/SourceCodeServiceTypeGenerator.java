@@ -26,6 +26,7 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 /**
  * @author binh_dh
@@ -98,6 +99,7 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
                                 new StringLiteralExpr(outputFQName))
                 )
         );
+        serviceCompilationUnit.addImport(BiConsumer.class);
         serviceCompilationUnit.addImport(Service.class.getCanonicalName());
         serviceClassDeclaration.addAnnotation(serviceAnnotationExpr);
 

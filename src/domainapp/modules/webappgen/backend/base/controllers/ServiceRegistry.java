@@ -1,10 +1,12 @@
 package domainapp.modules.webappgen.backend.base.controllers;
 
+import domainapp.modules.webappgen.backend.base.models.Identifier;
 import domainapp.modules.webappgen.backend.base.services.CrudService;
 
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 @SuppressWarnings({"rawtypes"})
 public final class ServiceRegistry {
@@ -34,5 +36,12 @@ public final class ServiceRegistry {
 
     public void put(String genericType, CrudService serviceInstance) {
         this.serviceTypeMap.put(genericType, serviceInstance);
+        serviceInstance.setOnCascadeUpdate(
+                (BiConsumer<Identifier, Object>) this::handleDomainObjectUpdate);
+    }
+
+    private void handleDomainObjectUpdate(Identifier identifier, Object object) {
+        ServiceRegistry.getInstance().get(object.getClass().getSimpleName())
+                .updateEntity(identifier, object);
     }
 }
