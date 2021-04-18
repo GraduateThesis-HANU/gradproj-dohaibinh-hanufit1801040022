@@ -8,3 +8,5 @@
 /lib/
 /.vscode
 *.log
+/src.examples/com/hanu/courseman/backend/
+/src.examples/com/hanu/courseman/frontend/
