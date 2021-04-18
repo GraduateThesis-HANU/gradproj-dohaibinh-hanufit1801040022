@@ -214,11 +214,16 @@ public class ListViewGenerator implements ViewGenerator {
 
         private static boolean isDisplayField(MCC mcc, FieldDeclaration viewField) {
             String name = ParserToolkit.getFieldName(viewField);
-            Optional<FieldDeclaration> fieldDeclarationOptional =
-                    mcc.getDomainClass()
-                            .getDomainFieldsByName(List.of(name))
-                            .stream()
-                            .findFirst();
+            Optional<FieldDeclaration> fieldDeclarationOptional;
+            try {
+                fieldDeclarationOptional = mcc.getDomainClass()
+                        .getDomainFieldsByName(List.of(name))
+                        .stream()
+                        .findFirst();
+            } catch (NullPointerException ex) {
+                System.out.println("Field " + viewField + " cause NULL_PTR");
+                return false;
+            }
             if (fieldDeclarationOptional.isEmpty()) return false;
             FieldDeclaration fieldDeclaration = fieldDeclarationOptional.get();
             MetaAttrDef annotation = ParserToolkit.getFieldDefFull(fieldDeclaration)

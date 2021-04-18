@@ -63,14 +63,17 @@ public class MCCUtils {
         Path projectPath = getProjectPath(cls);
 //        Path fullPath = projectPath.resolve("src/main/java")
 //                .resolve(getLongFileNameWithoutSuffix(cls).concat(".java"));
-        Path fullPath = projectPath.resolve("src/")
+//        Path fullPath = projectPath.resolve("src/")
+//                .resolve(getLongFileNameWithoutSuffix(cls).concat(".java"));
+        Path fullPath = projectPath.resolve("src.examples/")
                 .resolve(getLongFileNameWithoutSuffix(cls).concat(".java"));
         return fullPath;
     }
 
     // read MCC
     public static MCC readMCC(Class<?> domainClass, Class<?> mccClass) {
-        if (domainClass == null) return new MCC(mccClass.getSimpleName(), getFullPath(mccClass).toString(), null);
+        if (domainClass == null)
+            return new MCC(mccClass.getSimpleName(), getFullPath(mccClass).toString(), null);
         ClassAST dcls = new ClassAST(domainClass.getSimpleName(), getFullPath(domainClass).toString());
         return new MCC(mccClass.getSimpleName(), getFullPath(mccClass).toString(), dcls);
     }

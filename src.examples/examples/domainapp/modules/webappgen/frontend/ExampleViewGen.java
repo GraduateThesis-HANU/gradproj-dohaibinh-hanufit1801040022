@@ -4,6 +4,7 @@ import domainapp.modules.webappgen.frontend.SC1;
 import domainapp.modules.webappgen.frontend.examples.model.*;
 import domainapp.modules.webappgen.frontend.examples.modules.ModuleAddress;
 import domainapp.modules.webappgen.frontend.examples.modules.ModuleCourseModule;
+import domainapp.modules.webappgen.frontend.examples.modules.ModuleMain;
 import domainapp.modules.webappgen.frontend.examples.modules.ModuleStudent;
 import domainapp.modules.webappgen.frontend.generators.ViewAppGenerator;
 import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
@@ -36,7 +37,7 @@ public class ExampleViewGen {
         final String projectSrcDir = "/Users/binh_dh/vscode/courseman-examples-2/src";
         Class sccClass = SC1.class;
 
-        ViewAppGenerator generator = new ViewAppGenerator(projectSrcDir, sccClass);
+        ViewAppGenerator generator = new ViewAppGenerator(projectSrcDir, sccClass, ModuleMain.class);
         generator.addModule(Student.class, ModuleStudent.class);
         generator.addModule(CourseModule.class, ModuleCourseModule.class);
         generator.addModule(Address.class, ModuleAddress.class);

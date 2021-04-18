@@ -11,6 +11,6 @@ public class MainViewGen {
         Class sysClass = SC1.class;
         MCC mainMCC = MCCUtils.readMCC(null, ModuleMain.class);
 
-        System.out.println(new MainViewGenerator(sysClass, mainMCC).generate());
+        System.out.println(new MainViewGenerator(sysClass, ModuleMain.class, mainMCC).generate());
     }
 }

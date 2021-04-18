@@ -35,18 +35,18 @@ public class MainViewGenerator implements ViewGenerator {
     private final String template;
     private final Collection<FrontendModuleDescriptor> frontendModuleDescriptors;
 
-    public MainViewGenerator(Class<?> sysConfigClass, MCC mainMCC) {
+    public MainViewGenerator(Class<?> sysConfigClass, Class<?> moduleMainClass, MCC mainMCC) {
         Configuration initConfig = ApplicationToolKit.parseInitApplicationConfiguration(sysConfigClass);
         this.appName = initConfig.getAppName();
         this.welcomeText = "Welcome to " + mainMCC.getPropertyVal("viewDesc", "formTitle").asLiteralStringValueExpr().getValue();
         this.frontendModuleDescriptors = getFrontendModuleDescriptors(
-                ApplicationToolKit.parseApplicationModules(sysConfigClass));
+                ApplicationToolKit.parseApplicationModules(sysConfigClass), moduleMainClass);
         this.template = readWholeFile(getClass().getClassLoader().getResource(templateFile).getFile());
     }
 
-    private static Collection<FrontendModuleDescriptor> getFrontendModuleDescriptors(Class[] modules) {
+    private static Collection<FrontendModuleDescriptor> getFrontendModuleDescriptors(Class[] modules, Class moduleMainClass) {
         return Stream.of(modules)
-                .filter(module -> !module.equals(ModuleMain.class))
+                .filter(module -> !module.equals(moduleMainClass))
                 .map(module -> (ModuleDescriptor)module.getAnnotation(ModuleDescriptor.class))
                 .map(ModuleDescriptor::modelDesc)
                 .map(ModelDesc::model)
