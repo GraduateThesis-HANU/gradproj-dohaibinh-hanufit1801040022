@@ -11,6 +11,7 @@ import domainapp.basics.model.meta.DAttr;
 import domainapp.basics.model.meta.module.view.AttributeDesc;
 import domainapp.modules.common.model.parser.ClassAST;
 import domainapp.modules.common.parser.ParserToolkit;
+import domainapp.modules.common.parser.statespace.metadef.MetaAttrDef;
 import domainapp.modules.webappgen.frontend.examples.utils.InheritanceUtils;
 import domainapp.modules.webappgen.frontend.generators.utils.ClassAssocUtils;
 import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
@@ -318,18 +319,15 @@ public class FormGenerator implements ViewGenerator {
         String onChange = isTypeSelect ? "onChange={this.props.handleTypeChange} "
                 : String.format("onChange={(e) => this.props.handleStateChange(\"current.%s\", e.target.value, false)}", inputName);
         final StringBuilder selectOptionField = new StringBuilder();
-        selectOptionField.append("<FormGroup>").append("\n");
-        selectOptionField.append(String.format("  <Form.Label>%s</Form.Label>\n", label));
-        selectOptionField
-                .append(String.format(
-                        "  <Form.Control as=\"select\" " +
-                                "value={this.renderObject('current.%s')} " +
-                                onChange +
-                                (isTypeSelect ? "disabled={this.props.viewType !== \"create\"} " : "") +
-                                "custom>",
+        selectOptionField.append("<FormGroup>").append("\n")
+                .append(String.format("  <Form.Label>%s</Form.Label>\n", label))
+                .append(String.format("  <Form.Control as=\"select\" " +
+                        "value={this.renderObject('current.%s')} " + onChange +
+                        (isTypeSelect ? "disabled={this.props.viewType !== \"create\"} " : "") +
+                        "custom>",
                         inputName, inputName, false))
-                .append("\n");
-        selectOptionField.append("    <option value='' disabled selected>&lt;Please choose one&gt;</option>");
+                .append("\n")
+                .append("    <option value='' disabled selected>&lt;Please choose one&gt;</option>");
         for (Object possibleValue : possibleValues) {
             selectOptionField.append("    <option value=")
                     .append("\"")
@@ -351,15 +349,20 @@ public class FormGenerator implements ViewGenerator {
         Collection<String> formGroups = new LinkedList<>();
         for (FieldDeclaration viewField : viewFields) {
             if (!shouldHaveId && ViewStateUtils.isIdOrAuto(viewField)) continue;
-            String viewInputField = generateViewInputField(viewField, classAST.getCls(), true);
+            String viewInputField = generateInputField(viewField, mcc, classAST.getCls());
             formGroups.add(viewInputField);
         }
         return formGroups;
     }
 
-    static String getLabelFromAttrDescOrDefault(FieldDeclaration viewField,
-                                                MCC mcc,
-                                                ClassOrInterfaceDeclaration domainClass) {
+
+    private static String capitalizedHumanReadable(String original) {
+        return inflector.capitalize(inflector.humanize(inflector.underscore(original)));
+    }
+
+    private static String generateInputLabel(FieldDeclaration viewField,
+                                             MCC mcc,
+                                             ClassOrInterfaceDeclaration domainClass) {
         if (mcc != null && mcc.getViewFields().contains(viewField)) {
             NormalAnnotationExpr attributeDesc = ParserToolkit.getAnnotation(viewField, AttributeDesc.class);
             Map<String, Expression> expressionMap = MCCUtils.getExpressionMap(attributeDesc);
@@ -377,7 +380,7 @@ public class FormGenerator implements ViewGenerator {
                             ParserToolkit.getFieldName(field).equals(fieldName))
                     .findFirst();
             if (optionalViewField.isPresent()) {
-                return getLabelFromAttrDescOrDefault(optionalViewField.get(), mcc, domainClass);
+                return generateInputLabel(optionalViewField.get(), mcc, domainClass);
             } else {
                 Object labelName = domainAttrDefs.get("name");
                 if (labelName instanceof NameExpr) {
@@ -393,139 +396,6 @@ public class FormGenerator implements ViewGenerator {
 
     }
 
-    private static String capitalizedHumanReadable(String original) {
-        return inflector.capitalize(inflector.humanize(inflector.underscore(original)));
-    }
-
-    private String generateViewInputField(FieldDeclaration viewField,
-                                  ClassOrInterfaceDeclaration domainClass,
-                                  boolean fromDomainField) {
-        String label = capitalizedHumanReadable(
-                getLabelFromAttrDescOrDefault(viewField, mcc, domainClass));
-
-        Map<String, Object> domainAttrDefs;
-        if (fromDomainField) {
-            domainAttrDefs = ParserToolkit.getFieldDefFull(viewField)
-                    .getAnnotation(DAttr.class)
-                    .getProperties()
-                    .stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        } else {
-            domainAttrDefs = ViewStateUtils.getDomainAttrsOfViewField(viewField, domainClass);
-        }
-        DAttr.Type type = (DAttr.Type) domainAttrDefs.get("type");
-        List<String> extraAttrs = new LinkedList<>();
-
-        Boolean isId = (Boolean) domainAttrDefs.getOrDefault("id", null);
-        Boolean isAuto = (Boolean) domainAttrDefs.getOrDefault("auto", null);
-        if ((isId != null && isId) || (isAuto != null && isAuto)) {
-            extraAttrs.add("disabled");
-        }
-
-        Object domainFieldNameObj = domainAttrDefs.get("name");
-        String domainFieldName;
-        if (domainFieldNameObj instanceof NameExpr) {
-            domainFieldName = ViewStateUtils.initValueOf((NameExpr) domainFieldNameObj, domainClass).toString();
-        } else {
-            domainFieldName = domainFieldNameObj.toString();
-        }
-
-        // TODO: have a case to create select/option box
-        String inputType = "";
-        if (type.isString()) {
-            inputType = "text";
-        } else if (type.isDate()) {
-            inputType = "date";
-        } else if (type.isNumeric()) {
-            inputType = "number";
-        } else if (type.isColor()) {
-            inputType = "color";
-        } else if (type.isBoolean()) {
-            // TODO: create a checkbox
-        } else if (type.isDomainType()) {
-            String shortFieldTypeName = ParserToolkit.getFieldDefFull(viewField)
-                    .getType()
-                    .asClassOrInterfaceType()
-                    .getNameAsString();
-            Class<?> actualFieldType = domainTypeRegistry.getDomainTypeByName(shortFieldTypeName);
-            if (actualFieldType == null) {
-                return "";
-            }
-            if (actualFieldType.isEnum()) {
-                return createSelectOptionField(
-                        label, domainFieldName,
-                        List.of(actualFieldType.getEnumConstants()), false);
-            }
-
-            Map<String, Object> assoc = ParserToolkit.getFieldDefFull(viewField)
-                    .getAnnotation(DAssoc.class)
-                    .getProperties()
-                    .stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-            final AtomicInteger autoFieldWidth = new AtomicInteger(9);
-            String extra = "";
-            if (assoc.get("ascType").equals(DAssoc.AssocType.One2One)) {
-                // 1-1 gets the submodule button also
-                autoFieldWidth.set(8);
-                String actualFieldTypeName = actualFieldType.getSimpleName();
-                extra = String.format(
-                        "<%sSubmodule compact={true}" +
-                        "  mode='submodule'\n" +
-                        "  viewType={this.props.viewType}\n" +
-                        "  title=\"Manage %s\"\n" +
-                        "  current={this.props.current.%s}\n" +
-                        "  parentName=''\tparent={this.props.current}\n" +
-                        "  parentId={this.props.currentId}\n" +
-                        "  parentAPI={this.props.mainAPI}\n" +
-                        "  partialApplyWithCallbacks={this.partialApplyWithCallbacks} />",
-                        actualFieldTypeName,
-                        actualFieldTypeName,
-                        domainFieldName);
-                final String importTemplate = "import %s from \"./%s\";";
-                imports.add(String.format(importTemplate,
-                        actualFieldTypeName.concat("Submodule"),
-                        actualFieldTypeName.concat("Submodule")));
-//                return "";
-            }
-
-            inputType = "text";
-            extraAttrs.add("disabled");
-
-            // return this form control plus another for its ID
-            // get the id field
-            if (!actualFieldType.isEnum()) {
-                ClassAST classAST = new ClassAST(shortFieldTypeName, MCCUtils.getFullPath(actualFieldType).toString());
-                FieldDeclaration itsIdInputField = MCCUtils.getIdFieldOf(classAST);
-                // { this.props.excludes && this.props.excludes.includes("student") ? "" : <></> }
-                String fName = Character.toLowerCase(shortFieldTypeName.charAt(0)) + shortFieldTypeName.substring(1);
-                return "{ this.props.excludes && this.props.excludes.includes(\""+ fName +"\") ? \"\" : <>" +
-                        "<FormGroup className='d-flex flex-wrap justify-content-between align-items-end'>" +
-                        generateViewInputField(itsIdInputField, classAST.getCls(), domainFieldName)
-                                .replace("FormGroup", "Col")
-                                .replace("<Col", "<Col md={2.5} className='px-0'")
-                        .concat("\n")
-                        .concat(generateTemplatedViewInputField(
-                                    label, inputType, domainFieldName, extraAttrs, false)
-                                .replace("FormGroup", "Col")
-                                .replace("<Col", "<Col md={" + autoFieldWidth.get() + "} className='px-0'"))
-                        .concat(extra)
-                        .concat("</FormGroup>")
-                        .concat("</> }");
-                // generateViewInputField(itsIdInputField, classAST.getCls()));
-            }
-        } else if (type.isCollection()) {
-            inputType = "";
-        }
-
-        if (inputType.isEmpty()) {
-            return "";
-        }
-
-        return generateTemplatedViewInputField(
-                label, inputType, domainFieldName, extraAttrs, false);
-    }
-
     static String generateViewInputField(FieldDeclaration field,
                                          ClassOrInterfaceDeclaration domainClass,
                                          String referredField) {
@@ -536,15 +406,11 @@ public class FormGenerator implements ViewGenerator {
 
         DAttr.Type type = (DAttr.Type) domainAttrDefs.get("type");
         String inputType = "";
-        if (type.isString()) {
-            inputType = "text";
-        } else if (type.isDate()) {
-            inputType = "date";
-        } else if (type.isNumeric()) {
-            inputType = "number";
-        } else if (type.isColor()) {
-            inputType = "color";
-        } else if (type.isBoolean()) {
+        if (type.isString()) inputType = "text";
+        else if (type.isDate()) inputType = "date";
+        else if (type.isNumeric()) inputType = "number";
+        else if (type.isColor()) inputType = "color";
+        else if (type.isBoolean()) {
 
         }
         return generateTemplatedViewInputField(
@@ -565,12 +431,181 @@ public class FormGenerator implements ViewGenerator {
 
         result.append("<FormGroup>").append("\n");
         result.append(String.format("  <Form.Label>%s</Form.Label>\n", label));
-        result.append(
-                String.format("  <FormControl type=\"%s\" " +
-                                "value={this.renderObject(\"current.%s\")} " +
-                                "onChange={(e) => this.props.handleStateChange(\"current.%s\", e.target.value, %s)} %s />\n",
-                        inputType, stateFieldName, stateFieldName, needSyncing, String.join(" ", extraAttrs)));
+        result.append(String.format(
+                "  <FormControl type=\"%s\" " +
+                "value={this.renderObject(\"current.%s\")} " +
+                "onChange={(e) => this.props.handleStateChange(\"current.%s\", e.target.value, %s)} %s />\n",
+                inputType, stateFieldName, stateFieldName, needSyncing, String.join(" ", extraAttrs)));
         result.append("</FormGroup>");
         return result.toString();
+    }
+
+    private String generateInputField(FieldDeclaration field,
+                                             MCC mcc,
+                                             ClassOrInterfaceDeclaration domainClass) {
+        String label = generateInputLabel(field, mcc, domainClass);
+        MetaAttrDef dAttr = ParserToolkit.getFieldDefFull(field).getAnnotation(DAttr.class);
+        Boolean isId = (Boolean) getAnnotationAttrValue(dAttr, "id");
+        Boolean isAuto = (Boolean) getAnnotationAttrValue(dAttr, "auto");
+        boolean disabled = (isId != null && isId) || (isAuto != null && isAuto);
+        return generateInputByType(label, field, dAttr, disabled);
+    }
+
+    private String generateInputByType(String label,
+            FieldDeclaration field, MetaAttrDef dAttr, boolean disabled) {
+        DAttr.Type type = (DAttr.Type) getAnnotationAttrValue(dAttr, "type");
+        String fieldName = ParserToolkit.getFieldName(field);
+        if (type.isBoolean()) {
+            return generateCheckboxInput(fieldName, disabled);
+        } else if (type.isString() || type.isDate()
+                || type.isNumeric() || type.isColor()) {
+            return generateSimpleInputField(label,
+                    fieldName, type, disabled);
+        } else if (type.isDomainType() || type.isDomainReferenceType()) {
+            String shortFieldTypeName = getShortFieldTypeName(field);
+            Class<?> actualFieldType =
+                    domainTypeRegistry.getDomainTypeByName(shortFieldTypeName);
+            if (actualFieldType == null) {
+                return "";
+            }
+            else if (actualFieldType.isEnum()) {
+                return generateSelectInput(label, fieldName,
+                        List.of(actualFieldType.getEnumConstants()));
+            } else {
+                return generateAssociateInput(label, field, type);
+            }
+        } else {
+            return "";
+        }
+    }
+
+    private static String getShortFieldTypeName(FieldDeclaration field) {
+        return ParserToolkit.getFieldDefFull(field)
+                .getType()
+                .asClassOrInterfaceType()
+                .getNameAsString();
+    }
+
+    private String generateSimpleInputField(
+            String label, String fieldName,
+            DAttr.Type fieldType, boolean disabled) {
+        String inputType =
+                fieldType.isString() ? "text" :
+                fieldType.isNumeric() ? "number" :
+                fieldType.isColor() ? "color" : "date";
+        return generateTemplatedViewInputField(
+                label, inputType, fieldName,
+                disabled ? List.of("disabled") : List.of(), false);
+    }
+
+    private String generateCheckboxInput(String fieldName, boolean disabled) {
+        return "";
+    }
+
+    private String generateSelectInput(String label,
+            String fieldName, Collection<Object> possibleTypeValues) {
+        return createSelectOptionField(
+                label, fieldName, possibleTypeValues, false);
+    }
+
+    private static Object getAnnotationAttrValue(MetaAttrDef def, String name) {
+        try {
+            return def.getProperties()
+                    .stream()
+                    .filter(entry -> entry.getKey().equals(name))
+                    .findFirst()
+                    .get().getValue();
+        } catch (NoSuchElementException ex) {
+            return null;
+        }
+    }
+
+    private String generateAssociateInput(String label,
+                                          FieldDeclaration field,
+                                          DAttr.Type type) {
+        MetaAttrDef assoc = ParserToolkit.getFieldDefFull(field)
+                                        .getAnnotation(DAssoc.class);
+        DAssoc.AssocType assocType = (DAssoc.AssocType) getAnnotationAttrValue(
+                assoc, "ascType");
+
+        DAssoc.AssocEndType assocEndType = (DAssoc.AssocEndType) getAnnotationAttrValue(
+                assoc, "ascEndType");
+
+        if (assocType == DAssoc.AssocType.Many2Many ||
+                (assocType == DAssoc.AssocType.One2Many
+                        && assocEndType == DAssoc.AssocEndType.One)) {
+            return "";
+        }
+
+        return generateAssociateInput(label, field, type, assocType);
+    }
+
+    private String generateAssociateInput(String label, FieldDeclaration field, DAttr.Type type, DAssoc.AssocType assocType) {
+        String inputType = type.isString() ? "text" :
+                            type.isNumeric() ? "number" :
+                            type.isColor() ? "color" : "date";
+        final AtomicInteger autoFieldWidth = new AtomicInteger(9);
+
+        StringBuilder extra = new StringBuilder();
+        String domainFieldName = ParserToolkit.getFieldName(field);
+        String shortFieldTypeName = getShortFieldTypeName(field);
+        Class<?> actualFieldType = domainTypeRegistry.getDomainTypeByName(shortFieldTypeName);
+        String actualFieldTypeName = actualFieldType.getSimpleName();
+
+        if (assocType == DAssoc.AssocType.One2One) {
+            // 1-1 also get submodule button
+            autoFieldWidth.set(8);
+            extra.append(String.format(
+                    "<%sSubmodule compact={true}" +
+                            "  mode='submodule'\n" +
+                            "  viewType={this.props.viewType}\n" +
+                            "  title=\"Manage %s\"\n" +
+                            "  current={this.props.current.%s}\n" +
+                            "  parentName=''\tparent={this.props.current}\n" +
+                            "  parentId={this.props.currentId}\n" +
+                            "  parentAPI={this.props.mainAPI}\n" +
+                            "  partialApplyWithCallbacks={this.partialApplyWithCallbacks} />",
+                    actualFieldTypeName,
+                    actualFieldTypeName,
+                    domainFieldName));
+            final String importTemplate = "import %s from \"./%s\";";
+            imports.add(String.format(importTemplate,
+                    actualFieldTypeName.concat("Submodule"),
+                    actualFieldTypeName.concat("Submodule")));
+        }
+
+        return generateTemplatedAssociateInput(label, shortFieldTypeName,
+                actualFieldType, domainFieldName,
+                inputType, List.of(), autoFieldWidth, extra.toString());
+    }
+
+    private static String generateTemplatedAssociateInput(
+            String label,
+            String shortFieldTypeName,
+            Class actualFieldType,
+            String domainFieldName,
+            String inputType,
+            List<String> extraAttrs,
+            AtomicInteger autoFieldWidth,
+            String extra) {
+
+        ClassAST classAST = new ClassAST(shortFieldTypeName, MCCUtils.getFullPath(actualFieldType).toString());
+        FieldDeclaration itsIdInputField = MCCUtils.getIdFieldOf(classAST);
+        // { this.props.excludes && this.props.excludes.includes("student") ? "" : <></> }
+        String fName = Character.toLowerCase(shortFieldTypeName.charAt(0)) + shortFieldTypeName.substring(1);
+
+        return "{ this.props.excludes && this.props.excludes.includes(\"" + fName + "\") ? \"\" : <>" +
+            "<FormGroup className='d-flex flex-wrap justify-content-between align-items-end'>" +
+            generateViewInputField(itsIdInputField, classAST.getCls(), domainFieldName)
+                    .replace("FormGroup", "Col")
+                    .replace("<Col", "<Col md={2.5} className='px-0'")
+                    .concat("\n")
+                    .concat(generateTemplatedViewInputField(
+                            label, inputType, domainFieldName, extraAttrs, false)
+                            .replace("FormGroup", "Col")
+                            .replace("<Col", "<Col md={" + autoFieldWidth.get() + "} className='px-0'"))
+                    .concat(extra)
+                    .concat("</FormGroup>")
+                    .concat("</> }");
     }
 }

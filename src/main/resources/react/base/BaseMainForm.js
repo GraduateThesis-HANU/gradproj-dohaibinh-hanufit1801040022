@@ -348,7 +348,7 @@ export default class BaseMainForm extends React.Component {
 
   render() {
     return (<>
-      <Container>
+      <Container className="border p-4">
         {this.state.alert ? this.state.alert : ""}
         {this.state.notifications && this.state.notifications.length > 0 ? 
           <ToastWrapper>{this.state.notifications}</ToastWrapper> : ""}
@@ -365,7 +365,6 @@ export default class BaseMainForm extends React.Component {
         {this.state.viewType === "browse" ? "" : this.renderSubmodules()}
         <br />
         {this.state.viewType === "browse" ? "" : this.renderActionButtons()}
-        <br />
       </Container>
       <QuickScrollFab />
     </>);
