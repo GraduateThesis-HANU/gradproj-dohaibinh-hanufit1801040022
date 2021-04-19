@@ -348,7 +348,7 @@ export default class BaseMainForm extends React.Component {
 
   render() {
     return (<>
-      <Container className="border p-4">
+      <Container className="border py-4">
         {this.state.alert ? this.state.alert : ""}
         {this.state.notifications && this.state.notifications.length > 0 ? 
           <ToastWrapper>{this.state.notifications}</ToastWrapper> : ""}
