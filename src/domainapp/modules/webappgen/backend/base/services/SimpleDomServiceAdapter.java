@@ -3,9 +3,12 @@ package domainapp.modules.webappgen.backend.base.services;
 import domainapp.basics.controller.ControllerTk;
 import domainapp.basics.controller.helper.DataValidator;
 import domainapp.basics.exceptions.ConstraintViolationException;
+import domainapp.basics.model.def.Associate;
 import domainapp.basics.model.meta.DAssoc;
 import domainapp.basics.model.meta.DAttr;
 import domainapp.basics.model.meta.DClass;
+import domainapp.modules.domevents.CMEventType;
+import domainapp.modules.domevents.Publisher;
 import domainapp.modules.webappgen.backend.utils.IdentifierUtils;
 import domainapp.modules.webappgen.backend.base.models.Identifier;
 import domainapp.modules.webappgen.backend.base.models.Page;
@@ -15,6 +18,8 @@ import domainapp.basics.exceptions.NotFoundException;
 import domainapp.basics.exceptions.NotPossibleException;
 import domainapp.basics.model.query.Expression.Op;
 import domainapp.softwareimpl.SoftwareImpl;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -76,7 +81,8 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
             // cascade update
             Class entityClass = entity.getClass();
             String[] fieldNames = getFieldNames(entityClass, type);
-            Object[] values = getFieldValues(entityClass, type, fieldNames, entity);
+            Object[] values = getFieldValues(entityClass, type, fieldNames, entity)
+                    .values().toArray();
             performCascadeUpdate(values);
 
             return entity;
@@ -154,27 +160,75 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
         return fieldNames.toArray(new String[fieldNames.size()]);
     }
 
-    private static <T> Object[] getFieldValues(Class<T> cls, Class<T> superClass, String[] fieldNames, T o) {
+    private static boolean isOneOneOrManyOneAssocField(Field field) {
+        if (!field.isAnnotationPresent(DAssoc.class)) return false;
+        DAssoc dAssoc = field.getAnnotation(DAssoc.class);
+        return dAssoc.ascType().equals(DAssoc.AssocType.One2One)
+                || (dAssoc.ascType().equals(DAssoc.AssocType.One2Many)
+                    && dAssoc.endType().equals(DAssoc.AssocEndType.Many));
+    }
 
-        return List.of(fieldNames)
-                .stream()
-                .map(name -> {
-                    try {
-                        Field field = cls.getDeclaredField(name);
-                        field.setAccessible(true);
-                        return field.get(o);
-                    } catch (NoSuchFieldException | IllegalAccessException e) {
+    private static Field getFieldByName(String name, Class cls, Class superClass) {
+        try {
+            Field field = cls.getDeclaredField(name);
+            field.setAccessible(true);
+            return field;
+        } catch (NoSuchFieldException e) {
 //                        e.printStackTrace();
-                        try {
-                            Field field = superClass.getDeclaredField(name);
-                            field.setAccessible(true);
-                            return field.get(o);
-                        } catch (NoSuchFieldException | IllegalAccessException ex) {
-                            return null;
-                        }
+            try {
+                Field field = superClass.getDeclaredField(name);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException ex) {
+                return null;
+            }
+        }
+    }
+
+    //  if assoc 1-1 or M-1
+    //      allow null
+    //  else
+    //      reject new value
+    // SIDE EFFECT: Null assoc values are mapped instantly to REMOVE_LINK
+    private static <T> Map<String, Object> getFieldValues(
+            Class<T> cls, Class<T> superClass, String[] fieldNames, T o) {
+        final Map<String, Object> toBeUpdated = new HashMap<>();
+
+        List<String> fieldNameList = List.of(fieldNames);
+        List<String> nullableFieldNames = fieldNameList.stream()
+                .map(name -> getFieldByName(name, cls, superClass))
+                .filter(Objects::nonNull)
+                .filter(SimpleDomServiceAdapter::isOneOneOrManyOneAssocField)
+                .map(Field::getName)
+                .collect(Collectors.toList());
+        List<String> nonNullableFieldNames = fieldNameList.stream()
+                .filter(name -> !nullableFieldNames.contains(name))
+                .collect(Collectors.toList());
+
+        nullableFieldNames
+                .stream()
+                .map(name -> getFieldByName(name, cls, superClass))
+                .forEach(field -> {
+                    try {
+                        toBeUpdated.put(field.getName(), field.get(o));
+                    } catch (IllegalAccessException | NullPointerException e) {
+                        toBeUpdated.put(field.getName(), null);
                     }
-                })
-                .toArray();
+                });
+
+        nonNullableFieldNames
+                .stream()
+                .map(name -> getFieldByName(name, cls, superClass))
+                .filter(Objects::nonNull)
+                .forEach(field -> {
+                    try {
+                        toBeUpdated.put(field.getName(), field.get(o));
+                    } catch (IllegalAccessException | NullPointerException e) {
+                        toBeUpdated.put(field.getName(), null);
+                    }
+                });
+
+        return toBeUpdated;
     }
 
     @Override
@@ -188,10 +242,13 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
 
             if (entity == oldEntity) return entity;
             String[] fieldNames = getFieldNames(entityClass, type);
-            Object[] values = getFieldValues(entityClass, type, fieldNames, entity);
-            sw.updateObject(entityClass, oldEntity, fieldNames, values);
+            Map<String, Object> updateValues = getFieldValues(entityClass, type, fieldNames, entity);
+            final int numOfUpdateValues = updateValues.size();
+            String[] updateFieldNames = updateValues.keySet().toArray(new String[numOfUpdateValues]);
+            Object[] updateFieldValues = updateValues.values().toArray(new Object[numOfUpdateValues]);
+            sw.updateObject(entityClass, oldEntity, updateFieldNames, updateFieldValues);
 
-            performCascadeUpdate(values);
+            performCascadeUpdate(updateFieldValues);
 
             return sw.retrieveObjectById(entityClass, id.getId());
         } catch (NotPossibleException | NotFoundException
@@ -226,22 +283,30 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
     public void deleteEntityById(Identifier<?> id) {
         try {
             T toDelete = sw.retrieveObjectById(type, id.getId());
+            if (toDelete == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to find resource");
+            }
             Class entityClass = toDelete.getClass();
-            String[] fieldNames = getFieldNames(entityClass, type);
-            Object[] values = getFieldValues(entityClass, type, fieldNames, toDelete);
 
             sw.deleteObject(toDelete, type);
-            sw.getDom().getAssociates(toDelete, toDelete.getClass())
-                    .forEach(associate -> {
-                        System.out.println(associate.getAssociateObj());
-                        if (associate.getAssociationType() == DAssoc.AssocType.One2One) {
-                            try {
-                                sw.deleteObject(associate.getAssociateObj(), associate.getAssociateClass());
-                            } catch (DataSourceException e) {
-                                e.printStackTrace();
-                            }
+            Collection<Associate> associates = sw.getDom().getAssociates(toDelete, toDelete.getClass());
+            if (associates != null) {
+                associates.forEach(associate -> {
+                    System.out.println(associate.getAssociateObj());
+                    if (associate.isAssociationType(DAssoc.AssocType.One2One)) {
+                        try {
+                            sw.deleteObject(associate.getAssociateObj(), associate.getAssociateClass());
+                        } catch (DataSourceException e) {
+                            e.printStackTrace();
                         }
-                    });
+                    } if (toDelete instanceof Publisher) {
+                        // remove link
+                        Publisher eventSourceObj = (Publisher) toDelete;
+                        eventSourceObj.notify(CMEventType.OnRemoved, eventSourceObj.getEventSource());
+                        eventSourceObj.removeAllSubscribers();
+                    }
+                });
+            }
             sw.deleteObject(toDelete, type);
 
             // cascade update

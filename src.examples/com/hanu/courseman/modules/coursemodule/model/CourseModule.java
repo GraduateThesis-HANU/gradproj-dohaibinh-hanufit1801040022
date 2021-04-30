@@ -41,9 +41,9 @@ public abstract class CourseModule {
   // static variable to keep track of module code
   private static Map<Tuple,Integer> currNums = new LinkedHashMap<Tuple,Integer>();
 
-//  protected CourseModule() {
-//    id = nextID(null);
-//  }
+  protected CourseModule() {
+    id = nextID(null);
+  }
 
   // constructor method: create objects from data source
   @DOpt(type=DOpt.Type.DataSourceConstructor)

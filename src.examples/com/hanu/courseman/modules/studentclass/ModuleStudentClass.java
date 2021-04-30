@@ -1,6 +1,6 @@
-package com.hanu.courseman.modules.sclass;
+package com.hanu.courseman.modules.studentclass;
 
-import com.hanu.courseman.modules.sclass.model.SClass;
+import com.hanu.courseman.modules.studentclass.model.StudentClass;
 import com.hanu.courseman.modules.student.ModuleStudent;
 import com.hanu.courseman.modules.student.model.Student;
 import domainapp.basics.core.View;
@@ -28,7 +28,7 @@ import java.util.List;
  */
 @ModuleDescriptor(name="ModuleSClass",
 modelDesc=@ModelDesc(
-    model= SClass.class
+    model= StudentClass.class
 ),
 viewDesc=@ViewDesc(
     formTitle="Manage Student Classes",
@@ -46,7 +46,7 @@ viewDesc=@ViewDesc(
   childModules={ModuleStudent.class}
   ,setUpDesc=@SetUpDesc(postSetUp=CopyResourceFilesCommand.class)
 )
-public class ModuleSClass {
+public class ModuleStudentClass {
   @AttributeDesc(label="Student Class")
   private String title;
 

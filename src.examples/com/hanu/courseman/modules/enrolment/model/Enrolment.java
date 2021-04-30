@@ -84,10 +84,9 @@ public class Enrolment implements Comparable, Publisher {
   // constructor method
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
   @DOpt(type=DOpt.Type.RequiredConstructor)
-  @JsonCreator
-  public Enrolment(@AttrRef("student") Student s,
-                   @AttrRef("courseModule") CourseModule m) throws ConstraintViolationException {
-    this(null, s, m, 0.0, 0.0, null);
+  public Enrolment(@AttrRef("student") Student student,
+                   @AttrRef("courseModule") CourseModule courseModule) throws ConstraintViolationException {
+    this(null, student, courseModule, 0.0, 0.0, null);
   }
 
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
@@ -124,10 +123,11 @@ public class Enrolment implements Comparable, Publisher {
 
   // setter methods
   public void setStudent(Student s) {
-    removeSubcriber(student);
+    notify(CMEventType.OnRemoved, getEventSource(), student);
+    removeSubcriber(student, CMEventType.values());
     this.student = s;
     addSubscriber(student, CMEventType.values());
-    notify(CMEventType.OnCreated, getEventSource());
+    notify(CMEventType.OnCreated, getEventSource(), student);
   }
 
   public void setCourseModule(CourseModule m) {
@@ -136,7 +136,7 @@ public class Enrolment implements Comparable, Publisher {
 
   public void setInternalMark(Double mark) {
     // update final grade = false: to keep the integrity of its cached value
-    setInternalMark(mark, false);
+    setInternalMark(mark, true);
   }
 
   public void setInternalMark(Double mark, boolean updateFinalGrade) {
@@ -147,7 +147,7 @@ public class Enrolment implements Comparable, Publisher {
 
   public void setExamMark(Double mark) {
     // update final grade = false: to keep the integrity of its cached value
-    setExamMark(mark, false);
+    setExamMark(mark, true);
   }
 
   public void setExamMark(Double mark, boolean updateFinalGrade) {

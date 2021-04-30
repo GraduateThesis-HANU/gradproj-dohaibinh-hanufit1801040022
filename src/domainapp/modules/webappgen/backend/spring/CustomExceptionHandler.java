@@ -83,7 +83,11 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({ RuntimeException.class })
     public ResponseEntity<Object> handleRuntimeException(
             RuntimeException ex, WebRequest request) {
-        Throwable cause = ex.getCause();
+        ex.printStackTrace();
+        Throwable cause = ex;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
         cause.printStackTrace();
         if (cause == null) return handleExceptionInternal(
                 ex, new Object(), new HttpHeaders(),
@@ -109,6 +113,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
+    // TODO: get the deepest exception
     private ResponseEntity<Object> handleOtherException(
             ApplicationRuntimeException ex, WebRequest request) {
         String errText = ex.getCode().getText();

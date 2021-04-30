@@ -1,7 +1,7 @@
-package com.hanu.courseman.modules.sclass.model;
+package com.hanu.courseman.modules.studentclass.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.hanu.courseman.modules.enrolment.model.Enrolment;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hanu.courseman.modules.student.model.Student;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.*;
@@ -15,8 +15,8 @@ import domainapp.modules.domevents.CMEventType;
 import domainapp.modules.domevents.EventType;
 import domainapp.modules.domevents.Subscriber;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -26,7 +26,7 @@ import java.util.List;
  *
  */
 @DClass(schema="courseman")
-public class SClass implements Subscriber {
+public class StudentClass implements Subscriber {
     @DAttr(name="id",id=true,auto=true,length=6,mutable=false,type=Type.Integer)
     private int id;
     private static int idCounter;
@@ -49,19 +49,32 @@ public class SClass implements Subscriber {
 
     @DOpt(type=DOpt.Type.ObjectFormConstructor)
     @DOpt(type=DOpt.Type.RequiredConstructor)
-    @JsonCreator
-    public SClass(@AttrRef("name") String name) {
+    public StudentClass(@AttrRef("name") String name) {
         this(null, name);
     }
 
     // constructor to create objects from data source
     @DOpt(type=DOpt.Type.DataSourceConstructor)
-    public SClass(@AttrRef("id") Integer id,@AttrRef("name") String name) {
+    public StudentClass(@AttrRef("id") Integer id, @AttrRef("name") String name) {
         this.id = nextID(id);
         this.name = name;
 
-        students = new ArrayList<>();
+        students = new HashSet<>();
         studentsCount = 0;
+    }
+
+    @JsonCreator
+    private StudentClass() {
+        this((Integer) null);
+    }
+
+    private StudentClass(Integer id) {
+        if (id == null) {
+            this.id = nextID(null);
+        } else {
+            this.id = id;
+        }
+        this.students = new HashSet<>();
     }
 
     @DOpt(type=DOpt.Type.Setter)
@@ -134,6 +147,7 @@ public class SClass implements Subscriber {
      * @effects
      *  return <tt>studentsCount</tt>
      */
+    @JsonIgnore
     @DOpt(type=DOpt.Type.LinkCountGetter)
     public Integer getStudentsCount() {
         return studentsCount;
@@ -180,7 +194,7 @@ public class SClass implements Subscriber {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        SClass other = (SClass) obj;
+        StudentClass other = (StudentClass) obj;
         if (id != other.id)
             return false;
         return true;
@@ -227,11 +241,12 @@ public class SClass implements Subscriber {
         List data = changeEventSource.getObjects();
         Object srcObj = data.get(0);
 
-        System.out.println(this + ".\n   handleEvent(" + eventType + ", " + srcObj + ")");
+        System.out.println(this + ".handleEvent(" + eventType + ", " + srcObj + ")");
+
+        if (!data.stream().anyMatch(item -> item instanceof StudentClass)) return;
 
         if (srcObj instanceof Student) {
             Student student = (Student) srcObj;
-
             switch (type) {
                 case OnCreated:
                     // update links

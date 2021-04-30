@@ -55,7 +55,7 @@ final class AnnotationGenerator {
      * @param cls
      * @param defined
      */
-    void generateCircularAnnotations(Class<?> cls, Class<?>[] defined) {
+    Class<?> generateCircularAnnotations(Class<?> cls, Class<?>[] defined) {
         ByteBuddyAgent.install();
         try {
             Builder<?> builder = new ByteBuddy().rebase(cls);
@@ -68,11 +68,12 @@ final class AnnotationGenerator {
                             .defineArray("value", ignoredFields)
                             .build());
             }
-            builder.make()
-                  .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY);
+            return builder.make()
+                            .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY)
+                            .getLoaded();
 //                .saveIn(saveDir);
         } catch (Throwable ex) {
-            ex.printStackTrace();
+            throw new RuntimeException(ex);
         }
 
         // builder.make()
@@ -82,9 +83,9 @@ final class AnnotationGenerator {
      * Generate @JsonSubTypes, @JsonTypeInfo, @JsonTypeName to handle inheritance.
      * @param cls
      */
-    void generateInheritanceAnnotations(Class<?> cls) throws IOException {
+    Class<?> generateInheritanceAnnotations(Class<?> cls) {
         List<Class<?>> subtypes = InheritanceUtils.getSubtypesOf(cls);
-        if (subtypes.isEmpty()) return;
+        if (subtypes.isEmpty()) return cls;
         for (Class<?> subtype : subtypes) {
             try {
                 new ByteBuddy().decorate(subtype)
@@ -114,7 +115,7 @@ final class AnnotationGenerator {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         try {
-            new ByteBuddy().decorate(cls)
+            return new ByteBuddy().decorate(cls)
                 .annotateType(
                     ofType(JsonTypeInfo.class)
                         .define("use", JsonTypeInfo.Id.NAME)
@@ -128,10 +129,11 @@ final class AnnotationGenerator {
                                 new AnnotationDescription[subtypeAnnotations.size()]))
                         .build())
                 .make()
-                .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY);
+                .load(cls.getClassLoader(), DEFAULT_RELOADING_STRATEGY)
+                .getLoaded();
             // .saveIn(saveDir);
         } catch (Throwable ex) {
-
+            throw new RuntimeException(ex);
         }
 
     }

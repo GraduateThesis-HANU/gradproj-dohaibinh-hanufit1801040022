@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Col, Form, FormCheck, FormControl, FormGroup, Modal } from "react-bootstrap";
+import { Button, Col, Form, FormCheck, FormControl, FormGroup } from "react-bootstrap";
 import BaseForm from "../base/BaseForm";
 {{ view.submodule.imports }}
 

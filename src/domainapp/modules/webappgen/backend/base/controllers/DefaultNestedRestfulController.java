@@ -21,9 +21,9 @@ public abstract class DefaultNestedRestfulController<T1, T2>
         implements NestedRestfulController<T1, T2> {
 
     protected Class<T1> outerType = (Class) ((ParameterizedType) getClass()
-        .getGenericSuperclass()).getActualTypeArguments()[0];
+            .getGenericSuperclass()).getActualTypeArguments()[0];
     protected Class<T2> innerType = (Class) ((ParameterizedType) getClass()
-        .getGenericSuperclass()).getActualTypeArguments()[1];
+            .getGenericSuperclass()).getActualTypeArguments()[1];
 
     protected WebSocketHandler webSocketHandler;
 
@@ -45,33 +45,7 @@ public abstract class DefaultNestedRestfulController<T1, T2>
 
             // retrieve correct associations
             Class<T2> innerCls = (Class) requestBody.getClass();
-            for (Field field : innerCls.getDeclaredFields()) {
-                if (!field.isAnnotationPresent(DAssoc.class)) {
-                    continue;
-                }
-                DAssoc dAssoc = field.getAnnotation(DAssoc.class);
-                DAssoc.AssocType assocType = dAssoc.ascType();
-                DAssoc.AssocEndType endType = dAssoc.endType();
-                if (assocType.equals(DAssoc.AssocType.Many2Many)
-                    || (assocType.equals(DAssoc.AssocType.One2Many) && endType.equals(DAssoc.AssocEndType.One))) {
-                    continue;
-                }
-                CrudService service = getServiceOfGenericType(field.getType().getSimpleName());
-                field.setAccessible(true);
-                Object current = field.get(requestBody);
-                if (current.getClass().equals(outer.getClass())) {
-                    current = outer;
-                }
-                Class currentClass = current.getClass().getSuperclass() != Object.class ?
-                        current.getClass().getSuperclass() : current.getClass();
-                Field currentIdField = getIdField(current.getClass());
-                currentIdField.setAccessible(true);
-                String identifier = currentIdField.get(current).toString();
-                String setter = "set" + Character.toUpperCase(field.getName().charAt(0)) + field.getName().substring(1);
-                getMethodByName(innerCls, setter, currentClass)
-                        .invoke(requestBody,
-                                service.getEntityById(Identifier.fromString(identifier)));
-            }
+            retrieveCorrectAssociations(requestBody, outer, innerCls);
 
             // create object
             T2 created = svc.createEntity(requestBody);
@@ -86,6 +60,46 @@ public abstract class DefaultNestedRestfulController<T1, T2>
         } catch (IllegalArgumentException | IllegalAccessException
                 | InvocationTargetException ex) {
             throw new RuntimeException(ex);
+        }
+    }
+
+    private void retrieveCorrectAssociations(T2 requestBody, T1 outer, Class<T2> innerCls) throws IllegalAccessException, InvocationTargetException {
+        for (Field field : innerCls.getDeclaredFields()) {
+            if (!field.isAnnotationPresent(DAssoc.class)) {
+                continue;
+            }
+            DAssoc dAssoc = field.getAnnotation(DAssoc.class);
+            DAssoc.AssocType assocType = dAssoc.ascType();
+            DAssoc.AssocEndType endType = dAssoc.endType();
+            if (assocType.equals(DAssoc.AssocType.Many2Many)
+                    || (assocType.equals(DAssoc.AssocType.One2Many) && endType.equals(DAssoc.AssocEndType.One))) {
+                continue;
+            }
+            CrudService service = getServiceOfGenericType(field.getType().getSimpleName());
+            field.setAccessible(true);
+
+            Class currentClass = field.getType().getSuperclass() != Object.class ?
+                    field.getType().getSuperclass()
+                    : field.getType();
+            String setter = "set" + Character.toUpperCase(field.getName().charAt(0)) + field.getName().substring(1);
+            if (currentClass.equals(outer.getClass())) {
+                getMethodByName(innerCls, setter, currentClass)
+                        .invoke(requestBody, outer);
+                continue;
+            }
+            Object current = field.get(requestBody);
+
+            if (current == null) {
+                getMethodByName(innerCls, setter, currentClass)
+                        .invoke(requestBody, new Object[1]);
+                continue;
+            }
+            Field currentIdField = getIdField(currentClass);
+            currentIdField.setAccessible(true);
+            String identifier = currentIdField.get(current).toString();
+            getMethodByName(innerCls, setter, currentClass)
+                    .invoke(requestBody,
+                            service.getEntityById(Identifier.fromString(identifier)));
         }
     }
 
@@ -147,7 +161,7 @@ public abstract class DefaultNestedRestfulController<T1, T2>
         for (Method method : outerType.getMethods()) {
             if (method.getName().toLowerCase(Locale.ROOT)
                     .contains(innerType.getSimpleName().toLowerCase(Locale.ROOT))
-                && (method.getReturnType().equals(innerType)
+                    && (method.getReturnType().equals(innerType)
                     || method.getReturnType().equals(Collection.class))) {
                 getInnersFromOuter = method;
                 break;

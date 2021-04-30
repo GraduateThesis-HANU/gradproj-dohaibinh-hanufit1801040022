@@ -554,7 +554,7 @@ public class FormGenerator implements ViewGenerator {
 
         if (assocType == DAssoc.AssocType.One2One) {
             // 1-1 also get submodule button
-            autoFieldWidth.set(8);
+            autoFieldWidth.set(7);
             extra.append(String.format(
                     "<%sSubmodule compact={true}" +
                             "  mode='submodule'\n" +
@@ -564,9 +564,14 @@ public class FormGenerator implements ViewGenerator {
                             "  parentName=''\tparent={this.props.current}\n" +
                             "  parentId={this.props.currentId}\n" +
                             "  parentAPI={this.props.mainAPI}\n" +
-                            "  partialApplyWithCallbacks={this.partialApplyWithCallbacks} />",
+                            "  partialApplyWithCallbacks={this.partialApplyWithCallbacks}\n" +
+                            "  handleUnlink={() =>\n" +
+                            "    this.props.handleStateChange(\"current.%s\", null, false,\n" +
+                            "      this.props.handleStateChange(\"current.%sId\", \"\"))} />",
                     actualFieldTypeName,
                     actualFieldTypeName,
+                    domainFieldName,
+                    domainFieldName,
                     domainFieldName));
             final String importTemplate = "import %s from \"./%s\";";
             imports.add(String.format(importTemplate,
@@ -576,7 +581,7 @@ public class FormGenerator implements ViewGenerator {
 
         return generateTemplatedAssociateInput(label, shortFieldTypeName,
                 actualFieldType, domainFieldName,
-                inputType, List.of(), autoFieldWidth, extra.toString());
+                autoFieldWidth, extra.toString());
     }
 
     private static String generateTemplatedAssociateInput(
@@ -584,8 +589,6 @@ public class FormGenerator implements ViewGenerator {
             String shortFieldTypeName,
             Class actualFieldType,
             String domainFieldName,
-            String inputType,
-            List<String> extraAttrs,
             AtomicInteger autoFieldWidth,
             String extra) {
 
@@ -601,7 +604,7 @@ public class FormGenerator implements ViewGenerator {
                     .replace("<Col", "<Col md={2.5} className='px-0'")
                     .concat("\n")
                     .concat(generateTemplatedViewInputField(
-                            label, inputType, domainFieldName, extraAttrs, false)
+                            label, "text", domainFieldName, List.of("disabled"), false)
                             .replace("FormGroup", "Col")
                             .replace("<Col", "<Col md={" + autoFieldWidth.get() + "} className='px-0'"))
                     .concat(extra)

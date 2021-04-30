@@ -141,7 +141,9 @@ public class SpringApp {
     public Jackson2ObjectMapperBuilderCustomizer addCustomBigDecimalDeserialization() {
         return builder -> builder.dateFormat(new SimpleDateFormat("yyyy-MM-dd"))
                 .modules(new ParameterNamesModule())
-                .serializationInclusion(JsonInclude.Include.NON_NULL);
+                .serializationInclusion(JsonInclude.Include.NON_NULL)
+                .autoDetectFields(true)
+                .autoDetectGettersSetters(true);
                 //.configure(mapper);
     }
 }

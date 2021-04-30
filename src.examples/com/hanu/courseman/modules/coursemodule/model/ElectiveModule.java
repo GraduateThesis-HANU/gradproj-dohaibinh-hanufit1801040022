@@ -37,6 +37,8 @@ public class ElectiveModule extends CourseModule {
     this.deptName = deptName;
   }
 
+  private ElectiveModule() { }
+
   // setter method
   public void setDeptName(String deptName) {
     this.deptName = deptName;

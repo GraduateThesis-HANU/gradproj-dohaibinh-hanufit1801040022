@@ -11,12 +11,10 @@ import domainapp.basics.model.meta.DAssoc.Associate;
 import domainapp.basics.model.meta.DAttr.Type;
 import domainapp.basics.util.Tuple;
 import domainapp.basics.util.events.ChangeEventSource;
-import domainapp.modules.domevents.CMEventType;
-import domainapp.modules.domevents.EventType;
-import domainapp.modules.domevents.Publisher;
-import domainapp.modules.domevents.Subscriber;
+import domainapp.modules.domevents.*;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A domain class whose objects are city names. This class is used as
@@ -52,7 +50,6 @@ public class Address implements Subscriber, Publisher {
   // from object form: Student is not included
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
   @DOpt(type=DOpt.Type.RequiredConstructor)
-  @JsonCreator
   public Address(@AttrRef("name") String name) {
     this(null, name, null);
   }
@@ -72,15 +69,24 @@ public class Address implements Subscriber, Publisher {
   @JsonIgnore
   private ChangeEventSource eventSource;
 
-//  private Address() {
-//      this.id = nextId(null);
-//  }
+  @JsonCreator
+  private Address() {
+    this((Integer) null);
+  }
+
+  private Address(Integer id) {
+    this.id = nextId(id);
+  }
 
   // based constructor (used by others)
   private Address(Integer id, String name, Student student) {
     this.id = nextId(id);
     this.name = name;
     this.student = student;
+
+    addSubscriber(student, CMEventType.values());
+    // fire OnCreated event
+    notify(CMEventType.OnCreated, getEventSource());
   }
 
   private static int nextId(Integer currID) {
@@ -140,11 +146,12 @@ public class Address implements Subscriber, Publisher {
   }
 
   public void setStudent(Student student) {
-    if (student != null && student.equals(this.student)) return;
-    removeSubcriber(this.student);
+    if (Objects.equals(this.student, student)) return;
+    notify(CMEventType.OnRemoved, getEventSource(), this.student);
+    removeSubcriber(this.student, CMEventType.values());
     this.student = student;
     addSubscriber(this.student, CMEventType.values());
-    notify(CMEventType.OnCreated, getEventSource());
+    notify(CMEventType.OnCreated, getEventSource(), this.student);
   }
 
   @Override
@@ -178,10 +185,16 @@ public class Address implements Subscriber, Publisher {
     CMEventType eventType = (CMEventType) type;
     List data = source.getObjects();
     Object srcObj = data.get(0);
+    System.out.println(this + ".handleEvent(" + eventType + ", " + srcObj + ")");
+    if (!data.stream().anyMatch(item -> item instanceof Address)) return;
+
     if (srcObj instanceof Student) {
       switch (eventType) {
         case OnCreated:
           this.setNewStudent((Student) srcObj);
+          break;
+        case OnRemoved:
+          this.setStudent(null);
           break;
       }
     }

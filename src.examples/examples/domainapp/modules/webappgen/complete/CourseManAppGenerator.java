@@ -12,8 +12,8 @@ import com.hanu.courseman.modules.coursemodule.model.CourseModule;
 import com.hanu.courseman.modules.coursemodule.model.ElectiveModule;
 import com.hanu.courseman.modules.enrolment.ModuleEnrolment;
 import com.hanu.courseman.modules.enrolment.model.Enrolment;
-import com.hanu.courseman.modules.sclass.ModuleSClass;
-import com.hanu.courseman.modules.sclass.model.SClass;
+import com.hanu.courseman.modules.studentclass.ModuleStudentClass;
+import com.hanu.courseman.modules.studentclass.model.StudentClass;
 import com.hanu.courseman.modules.student.ModuleStudent;
 import com.hanu.courseman.modules.student.model.Gender;
 import com.hanu.courseman.modules.student.model.Student;
@@ -29,14 +29,20 @@ import domainapp.modules.webappgen.frontend.generators.ViewAppGenerator;
 import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
 import domainapp.software.SoftwareFactory;
 import domainapp.softwareimpl.SoftwareImpl;
+import org.modeshape.common.logging.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -54,7 +60,7 @@ public class CourseManAppGenerator {
             Enrolment.class,
             Student.class,
             Address.class,
-            SClass.class,
+            StudentClass.class,
             CompulsoryModule.class,
             ElectiveModule.class
     };
@@ -65,7 +71,7 @@ public class CourseManAppGenerator {
             ModuleEnrolment.class,
             ModuleStudent.class,
             ModuleAddress.class,
-            ModuleSClass.class
+            ModuleStudentClass.class
     };
 
     private static final String backendTargetPackage = "com.hanu.courseman.backend";
@@ -189,6 +195,28 @@ public class CourseManAppGenerator {
                     .modules(new ParameterNamesModule())
                     .serializationInclusion(JsonInclude.Include.NON_NULL);
             //.configure(mapper);
+        }
+
+        @RestController
+        public static class xxx {
+            @Autowired
+            private RequestMappingHandlerMapping requestMappingHandlerMapping;
+            @RequestMapping( value = "/endpoints", method = RequestMethod.GET )
+            public Object getEndPointsInView()
+            {
+                return requestMappingHandlerMapping.getHandlerMethods().keySet();
+            }
+        }
+
+        @ControllerAdvice
+        public class ControllerConfig {
+
+            @ExceptionHandler
+            @ResponseStatus(HttpStatus.BAD_REQUEST)
+            public void handle(HttpMessageNotReadableException e) {
+                System.err.println("Returning HTTP 400 Bad Request: " + e);
+                throw e;
+            }
         }
     }
 }

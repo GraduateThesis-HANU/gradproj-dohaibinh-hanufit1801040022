@@ -31,4 +31,5 @@ public class CompulsoryModule extends CourseModule {
     super(id, code, name, semester, credits);
   }
 
+  private CompulsoryModule() { }
 }

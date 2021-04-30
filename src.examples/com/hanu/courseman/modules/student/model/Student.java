@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hanu.courseman.exceptions.DExCode;
 import com.hanu.courseman.modules.address.model.Address;
 import com.hanu.courseman.modules.enrolment.model.Enrolment;
-import com.hanu.courseman.modules.sclass.model.SClass;
+import com.hanu.courseman.modules.studentclass.model.StudentClass;
 import com.hanu.courseman.utils.DToolkit;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.*;
@@ -66,11 +66,11 @@ public class Student implements Subscriber, Publisher {
   @DAttr(name = A_email, type = Type.String, length = 30, optional = false)
   private String email;
 
-  @DAttr(name="sclass",type=Type.Domain,length = 6)
+  @DAttr(name="studentClass",type=Type.Domain,length = 6)
   @DAssoc(ascName="class-has-student",role="student",
           ascType=AssocType.One2Many,endType=AssocEndType.Many,
-          associate=@Associate(type= SClass.class,cardMin=1,cardMax=1))
-  private SClass sclass;
+          associate=@Associate(type= StudentClass.class,cardMin=1,cardMax=1))
+  private StudentClass studentClass;
 
   @DAttr(name="enrolments",type=Type.Collection,optional = false,
           serialisable=false,filter=@Select(clazz= Enrolment.class))
@@ -88,12 +88,21 @@ public class Student implements Subscriber, Publisher {
   @JsonIgnore
   private ChangeEventSource eventSource;
 
+  @JsonCreator
+  private Student() {
+    this(null);
+  }
+
+  private Student(String id) {
+    this.id = nextID(id);
+    this.enrolments = new HashSet<>();
+  }
+
   // constructor methods
   // for creating in the application
   // without SClass
   @DOpt(type=DOpt.Type.ObjectFormConstructor)
   @DOpt(type=DOpt.Type.RequiredConstructor)
-  @JsonCreator
   public Student(@AttrRef("name") String name,
                  @AttrRef("gender") Gender gender,
                  @AttrRef("dob") Date dob,
@@ -108,8 +117,8 @@ public class Student implements Subscriber, Publisher {
                  @AttrRef("dob") Date dob,
                  @AttrRef("address") Address address,
                  @AttrRef("email") String email,
-                 @AttrRef("sclass") SClass sclass) {
-    this(null, name, gender, dob, address, email, sclass);
+                 @AttrRef("studentClass") StudentClass studentClass) {
+    this(null, name, gender, dob, address, email, studentClass);
   }
 
   // a shared constructor that is invoked by other constructors
@@ -117,7 +126,7 @@ public class Student implements Subscriber, Publisher {
   public Student(@AttrRef("id") String id,
                  @AttrRef("dob") String name, @AttrRef("gender") Gender gender,
                  @AttrRef("dob") Date dob, @AttrRef("address") Address address,
-                 @AttrRef("email") String email, @AttrRef("sclass") SClass sclass)
+                 @AttrRef("email") String email, @AttrRef("studentClass") StudentClass studentClass)
           throws ConstraintViolationException {
     // generate an id
     this.id = nextID(id);
@@ -128,15 +137,16 @@ public class Student implements Subscriber, Publisher {
     this.dob = dob;
     this.address = address;
     this.email = email;
-    this.sclass = sclass;
+    this.studentClass = studentClass;
 
-    enrolments = new ArrayList<>();
+    enrolments = new HashSet<>();
     enrolmentCount = 0;
     averageMark = 0D;
 
     // publish/subscribe pattern
     // register student as subscriber for add event
-    addSubscriber(sclass, CMEventType.values());
+    addSubscriber(studentClass, CMEventType.values());
+    addSubscriber(address, CMEventType.values());
 
     // fire OnCreated event
     notify(CMEventType.OnCreated, getEventSource());
@@ -161,11 +171,12 @@ public class Student implements Subscriber, Publisher {
   }
 
   public void setAddress(Address address) {
-    if (address != null && address.equals(this.address)) return;
-    removeSubcriber(this.address);
+    if (Objects.equals(this.address, address)) return;
+    notify(CMEventType.OnRemoved, getEventSource(), this.address);
+    removeSubcriber(this.address, CMEventType.values());
     this.address = address;
     addSubscriber(address, CMEventType.values());
-    notify(CMEventType.OnCreated, getEventSource());
+    notify(CMEventType.OnCreated, getEventSource(), this.address);
   }
 
   // v2.7.3
@@ -182,11 +193,12 @@ public class Student implements Subscriber, Publisher {
     this.email = email;
   }
 
-  public void setSclass(SClass sclass) {
-    removeSubcriber(sclass);
-    this.sclass = sclass;
-    addSubscriber(sclass, CMEventType.values());
-    notify(CMEventType.OnCreated, getEventSource());
+  public void setStudentClass(StudentClass studentClass) {
+    notify(CMEventType.OnRemoved, getEventSource(), this.studentClass);
+    removeSubcriber(this.studentClass, CMEventType.values());
+    this.studentClass = studentClass;
+    addSubscriber(this.studentClass, CMEventType.values());
+    notify(CMEventType.OnCreated, getEventSource(), this.studentClass);
   }
 
   @DOpt(type=DOpt.Type.LinkAdder)
@@ -348,14 +360,15 @@ public class Student implements Subscriber, Publisher {
     return email;
   }
 
-  public SClass getSclass() {
-    return sclass;
+  public StudentClass getStudentClass() {
+    return studentClass;
   }
 
   public Collection<Enrolment> getEnrolments() {
     return enrolments;
   }
 
+  @JsonIgnore
   @DOpt(type=DOpt.Type.LinkCountGetter)
   public Integer getEnrolmentsCount() {
     return enrolmentCount;
@@ -382,7 +395,7 @@ public class Student implements Subscriber, Publisher {
   public String toString(boolean full) {
     if (full)
       return "Student(" + id + "," + name + "," + gender + ", " + dob + "," + address + ","
-              + email + ((sclass != null) ? "," + sclass.getName() : "") + ")";
+              + email + ((studentClass != null) ? "," + studentClass.getName() : "") + ")";
     else
       return "Student(" + id + ")";
   }
@@ -480,7 +493,8 @@ public class Student implements Subscriber, Publisher {
     List data = source.getObjects();
     Object srcObj = data.get(0);
 
-    System.out.println(this + ".\n   handleEvent(" + eventType + ", " + srcObj + ")");
+    System.out.println(this + ".handleEvent(" + eventType + ", " + srcObj + ")");
+    if (!data.stream().anyMatch(item -> item instanceof Student)) return;
 
     if (srcObj instanceof Enrolment) {
       Enrolment enrolment = (Enrolment) srcObj;
@@ -501,6 +515,9 @@ public class Student implements Subscriber, Publisher {
       switch (eventType) {
         case OnCreated:
           this.setNewAddress((Address) srcObj);
+          break;
+        case OnRemoved:
+          this.setAddress(null);
           break;
       }
     }

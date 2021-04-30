@@ -1,6 +1,5 @@
 import React from "react";
 import BaseListView from "../base/BaseListView";
-import { Button, Form, FormCheck, FormControl, FormGroup, Modal } from "react-bootstrap";
 import {{ view.name.listItem }} from "./{{ view.name.listItem }}";
 
 export default class {{ view.name.list }} extends BaseListView {
