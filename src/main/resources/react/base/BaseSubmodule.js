@@ -1,8 +1,8 @@
-import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React from "react";
 import { Button } from "react-bootstrap";
-import BaseForm from "./BaseForm";
+import DeleteConfirmation from "../common/DeleteConfirmation";
 
 export default class BaseSubmodule extends React.Component {
   constructor(props) {
@@ -35,11 +35,16 @@ export default class BaseSubmodule extends React.Component {
   }
 
   renderModule(props) {
-
+    
   }
 
   render() {
     return (<>
+      {this.props.compact ?
+        <DeleteConfirmation outline label="Unlink"
+          action={this.props.handleUnlink}
+          disabled={!this.props.current || this.props.current === ""}
+          withoutModal /> : ""}
       {this.renderExpandButton()}
       {this.state.expanded ?
         this.renderModule(this.props)

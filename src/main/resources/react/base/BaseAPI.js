@@ -8,7 +8,7 @@ export default class BaseAPI {
    */
   constructor(objectNamePlural, commFunction) {
     this.objectNamePlural = objectNamePlural;
-    this.commFunction = commFunction;
+    this.callBackend = commFunction;
     this.create = this.create.bind(this);
     this.createInner = this.createInner.bind(this);
     this.deleteById = this.deleteById.bind(this);
@@ -24,7 +24,7 @@ export default class BaseAPI {
     console.log(this);
     const url = `${constants.host}/${this.objectNamePlural}`;
     const method = "POST";
-    this.commFunction(
+    this.callBackend(
       url, method, data
     ).then(onSuccess).catch(onFailure);
   }
@@ -32,7 +32,7 @@ export default class BaseAPI {
   getById([id, onSuccess = undefined, onFailure = undefined]) {
     const url = `${constants.host}/${this.objectNamePlural}/${id}`;
     const method = "GET";
-    this.commFunction(
+    this.callBackend(
       url, method, undefined
     ).then(onSuccess).catch(onFailure);
   }
@@ -40,7 +40,7 @@ export default class BaseAPI {
   getByPage([pageNumber, onSuccess = undefined, onFailure = undefined]) {
     const url = `${constants.host}/${this.objectNamePlural}?pageNumber=${pageNumber}`;
     const method = "GET";
-    this.commFunction(
+    this.callBackend(
       url, method, undefined
     ).then(onSuccess).catch(onFailure);
   }
@@ -51,7 +51,7 @@ export default class BaseAPI {
     const pageNo = pageNumber ? pageNumber : 1;
     const url = `${constants.host}/${this.objectNamePlural}?pageNumber=${pageNo}${filteringType ? `&type=${filteringType}` : ""}`;
     const method = "GET";
-    this.commFunction(
+    this.callBackend(
       url, method, undefined
     ).then(onSuccess).catch(onFailure);
   }
@@ -59,7 +59,7 @@ export default class BaseAPI {
   getFirstPage([onSuccess = undefined, onFailure = undefined]) {
     const url = `${constants.host}/${this.objectNamePlural}`;
     const method = "GET";
-    this.commFunction(
+    this.callBackend(
       url, method, undefined
     ).then(onSuccess).catch(onFailure);
   }
@@ -67,7 +67,7 @@ export default class BaseAPI {
   updateById([id, data, onSuccess = undefined, onFailure = undefined]) {
     const url = `${constants.host}/${this.objectNamePlural}/${id}`;
     const method = "PATCH";
-    this.commFunction(
+    this.callBackend(
       url, method, data
     ).then(onSuccess).catch(onFailure);
   }
@@ -75,7 +75,7 @@ export default class BaseAPI {
   deleteById([id, onSuccess = undefined, onFailure = undefined]) {
     const url = `${constants.host}/${this.objectNamePlural}/${id}`;
     const method = "DELETE";
-    this.commFunction(
+    this.callBackend(
       url, method, undefined
     ).then(onSuccess).catch(onFailure);
   }
@@ -83,7 +83,7 @@ export default class BaseAPI {
   getAllInner([innerName, outerId, onSuccess = undefined, onFailure = undefined]) {
     const url = `${constants.host}/${this.objectNamePlural}/${outerId}/${innerName}`;
     const method = "GET";
-    this.commFunction(
+    this.callBackend(
       url, method, undefined
     ).then(onSuccess).catch(onFailure);
   }
@@ -92,7 +92,7 @@ export default class BaseAPI {
       onSuccess = undefined, onFailure = undefined]) {
     const url = `${constants.host}/${this.objectNamePlural}/${outerId}/${innerName}`;
     const method = "POST";
-    this.commFunction(
+    this.callBackend(
       url, method, data
     ).then(onSuccess).catch(onFailure);
   }

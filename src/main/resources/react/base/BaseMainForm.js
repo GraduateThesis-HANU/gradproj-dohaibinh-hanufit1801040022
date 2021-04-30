@@ -184,8 +184,10 @@ export default class BaseMainForm extends React.Component {
       const actualName = name.replace(".id", "").replace("current.", "");
       const actualAPIName = Object.keys(this.props)
                                   .filter(key => key.includes("API"))
-                                  .filter(key => key.toLocaleLowerCase()
-                                    .includes(actualName.toLocaleLowerCase()))[0];
+                                  .filter(key =>
+                                    key.toLocaleLowerCase()
+                                      .startsWith(actualName.toLocaleLowerCase())
+                                    && key.length - actualName.length <= 5)[0];
       this.props[actualAPIName].getById([id, onSuccess, onFailure]);
     }
   }
@@ -233,10 +235,13 @@ export default class BaseMainForm extends React.Component {
       return;
     }
     // update UI somewhere here
-    if (!(result instanceof(Response))) { // if not void
-      this.handleStateChange("current", result, false,
-        () => this.handleStateChange("currentId", result.id, false, 
-          () => this.handleStateChange("viewType", "details")));
+    if (result) { // if not void
+      this.handleStateChange("current", result === "" ? {} : result, false,
+        () => this.handleStateChange("currentId", result === "" ? "" : result.id, false, 
+          () => this.handleStateChange("viewType", result === "" ? "create" : "details")));
+    } else { 
+      this.handleStateChange("current", {}, false,
+          () => this.handleStateChange("viewType", "browse"));
     }
     // this.handleStateChange("currentId", "", true);
     this.addToastPopup((<>

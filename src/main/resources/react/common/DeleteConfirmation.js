@@ -27,14 +27,17 @@ export default function DeleteConfirmation(props) {
 
   return (
     <>
-      <Button variant="danger" onClick={handleShow}>Delete</Button>
+      <Button variant={props.outline ? "outline-danger" : "danger"}
+        disabled={props.disabled}
+        onClick={props.withoutModal ? onAction : handleShow}>
+        {props.label ? props.label : "Delete"}</Button>
       {hasModal === true ? 
       <Modal show={show} onHide={handleClose} onExited={() => setHasModal(false)}>
         <Modal.Header closeButton={true}>
-          <Modal.Title>Confirm delete</Modal.Title>
+          <Modal.Title>{props.message ? props.message : "Confirm delete"}</Modal.Title>
         </Modal.Header>
         
-        <Modal.Body>Delete this resource?</Modal.Body>
+        <Modal.Body>{props.confirmation ? props.confirmation : "Delete this resource?"}</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" size="sm" onClick={handleClose}>
             Cancel
