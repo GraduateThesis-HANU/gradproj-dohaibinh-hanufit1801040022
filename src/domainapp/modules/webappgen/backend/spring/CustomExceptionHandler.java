@@ -18,6 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
@@ -65,19 +66,15 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         }
     }
 
-    @ExceptionHandler({ NotFoundException.class })
+    @ExceptionHandler({ NotFoundException.class, NoSuchElementException.class })
     public ResponseEntity<Object> handleNotFoundException(
-            ApplicationException ex, WebRequest request) {
-        String errText = ex.getCode().getText();
+            RuntimeException ex, WebRequest request) {
+        String errText = ex instanceof NotFoundException ?
+                ((NotFoundException)ex).getCode().getText() : ex.getMessage();
         String message = ex.getMessage();
         final ApiError apiError = new ApiError(message, errText);
-        try {
-            final String json = objectMapper.writeValueAsString(apiError);
-            return handleExceptionInternal(
-                    ex, json, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return handleExceptionInternal(
+                ex, apiError, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
 
     @ExceptionHandler({ RuntimeException.class })
@@ -99,8 +96,8 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         if (cause instanceof ConstraintViolationException) {
             return handleConstraintViolation((ConstraintViolationException) cause, request);
         }
-        if (cause instanceof NotFoundException) {
-            return handleNotFoundException((ApplicationException) cause, request);
+        if (cause instanceof NotFoundException || cause instanceof NoSuchElementException) {
+            return handleNotFoundException((RuntimeException) cause, request);
         }
         if (cause instanceof NotPossibleException) {
             return handleOtherException((ApplicationRuntimeException) cause, request);
@@ -109,7 +106,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         System.out.println("HANDLING EXCEPTION WITH CAUSE: " + cause);
 
         return handleExceptionInternal(
-                ex, "{}", new HttpHeaders(),
+                ex, new Object(), new HttpHeaders(),
                 HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
@@ -119,13 +116,8 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         String errText = ex.getCode().getText();
         String message = ex.getMessage();
         final ApiError apiError = new ApiError(message, errText);
-        try {
-            final String json = objectMapper.writeValueAsString(apiError);
-            return handleExceptionInternal(
-                    ex, json, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return handleExceptionInternal(
+                ex, apiError, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
     private ResponseEntity<Object> handleDataException(
@@ -133,12 +125,8 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         String errText = ex.getCode().getText();
         String message = ex.getMessage();
         final ApiError apiError = new ApiError(message, errText);
-        try {
-            final String json = objectMapper.writeValueAsString(apiError);
-            return handleExceptionInternal(
-                    ex, json, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+
+        return handleExceptionInternal(
+                ex, apiError, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 }

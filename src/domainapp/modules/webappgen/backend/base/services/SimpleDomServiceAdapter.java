@@ -98,9 +98,13 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
             T retrieved = sw.retrieveObjectById(type, id.getId());
             try {
                 sw.loadAssociatedObjects(retrieved);
-            } catch (NullPointerException ex) { }
+            } catch (NullPointerException ex) {
+                throw new NoSuchElementException("Not found: id = " + id.getId());
+            }
             return retrieved;
-        } catch (NotFoundException | DataSourceException e) {
+        } catch (NotFoundException e) {
+            throw new NoSuchElementException(e);
+        } catch (DataSourceException e) {
             throw new RuntimeException(e);
         }
     }

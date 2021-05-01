@@ -194,7 +194,8 @@ public class Address implements Subscriber, Publisher {
           this.setNewStudent((Student) srcObj);
           break;
         case OnRemoved:
-          this.setStudent(null);
+          removeSubcriber(this.student, CMEventType.values());
+          this.student = null;
           break;
       }
     }

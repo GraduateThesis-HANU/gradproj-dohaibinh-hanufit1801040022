@@ -517,7 +517,8 @@ public class Student implements Subscriber, Publisher {
           this.setNewAddress((Address) srcObj);
           break;
         case OnRemoved:
-          this.setAddress(null);
+          removeSubcriber(this.address, CMEventType.values());
+          this.address = null;
           break;
       }
     }
