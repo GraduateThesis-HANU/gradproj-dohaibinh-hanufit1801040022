@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -75,6 +76,12 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         final ApiError apiError = new ApiError(message, errText);
         return handleExceptionInternal(
                 ex, apiError, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        ex.printStackTrace();
+        return super.handleHttpMessageNotReadable(ex, headers, status, request);
     }
 
     @ExceptionHandler({ RuntimeException.class })

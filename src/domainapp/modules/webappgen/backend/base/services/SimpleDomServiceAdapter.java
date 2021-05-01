@@ -246,12 +246,23 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
 
             if (entity == oldEntity) return entity;
             String[] fieldNames = getFieldNames(entityClass, type);
+
             Map<String, Object> updateValues = getFieldValues(entityClass, type, fieldNames, entity);
             final int numOfUpdateValues = updateValues.size();
             String[] updateFieldNames = updateValues.keySet().toArray(new String[numOfUpdateValues]);
             Object[] updateFieldValues = updateValues.values().toArray(new Object[numOfUpdateValues]);
+
+            Map<String, Object> originalValues = getFieldValues(entityClass, type, fieldNames, oldEntity);
+            originalValues.keySet().forEach(key -> {
+                if (!updateValues.containsKey(key)) {
+                    originalValues.remove(key);
+                }
+            });
+            Object[] originalFieldValues = originalValues.values().toArray(new Object[numOfUpdateValues]);
+
             sw.updateObject(entityClass, oldEntity, updateFieldNames, updateFieldValues);
 
+            performCascadeUpdate(originalFieldValues);
             performCascadeUpdate(updateFieldValues);
 
             return sw.retrieveObjectById(entityClass, id.getId());
@@ -310,15 +321,11 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
         if (toDelete instanceof Publisher) {
             // remove link
             Publisher eventSourceObj = (Publisher) toDelete;
-            eventSourceObj.notify(CMEventType.OnRemoved, eventSourceObj.getEventSource());
+            eventSourceObj.notify(CMEventType.OnRemoved, eventSourceObj.getEventSource(), toDelete);
             eventSourceObj.removeAllSubscribers();
         }
         if (associate.isAssociationType(DAssoc.AssocType.One2One)) {
-            try {
-                sw.deleteObject(associate.getAssociateObj(), associate.getAssociateClass());
-            } catch (DataSourceException e) {
-                e.printStackTrace();
-            }
+            updateAndSaveAssociate(associate, associate.getAssociateObj());
         } else if (associate.isAssociationType(DAssoc.AssocType.One2Many)
                 && associate.isMyEndType(DAssoc.AssocEndType.Many)) {
             List<Object> associatedObjs = (List) associate.getAssociateObj();
