@@ -290,26 +290,11 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
             if (toDelete == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to find resource");
             }
-            Class entityClass = toDelete.getClass();
 
-            sw.deleteObject(toDelete, type);
             Collection<Associate> associates = sw.getDom().getAssociates(toDelete, toDelete.getClass());
             if (associates != null) {
-                associates.forEach(associate -> {
-                    System.out.println(associate.getAssociateObj());
-                    if (associate.isAssociationType(DAssoc.AssocType.One2One)) {
-                        try {
-                            sw.deleteObject(associate.getAssociateObj(), associate.getAssociateClass());
-                        } catch (DataSourceException e) {
-                            e.printStackTrace();
-                        }
-                    } if (toDelete instanceof Publisher) {
-                        // remove link
-                        Publisher eventSourceObj = (Publisher) toDelete;
-                        eventSourceObj.notify(CMEventType.OnRemoved, eventSourceObj.getEventSource());
-                        eventSourceObj.removeAllSubscribers();
-                    }
-                });
+                associates.forEach(associate ->
+                        processDeleteOnAssociates(toDelete, associate));
             }
             sw.deleteObject(toDelete, type);
 
@@ -317,6 +302,40 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
 //            performCascadeUpdate(values);
         } catch (DataSourceException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void processDeleteOnAssociates(T toDelete, Associate associate) {
+        System.out.println(associate.getAssociateObj());
+        if (toDelete instanceof Publisher) {
+            // remove link
+            Publisher eventSourceObj = (Publisher) toDelete;
+            eventSourceObj.notify(CMEventType.OnRemoved, eventSourceObj.getEventSource());
+            eventSourceObj.removeAllSubscribers();
+        }
+        if (associate.isAssociationType(DAssoc.AssocType.One2One)) {
+            try {
+                sw.deleteObject(associate.getAssociateObj(), associate.getAssociateClass());
+            } catch (DataSourceException e) {
+                e.printStackTrace();
+            }
+        } else if (associate.isAssociationType(DAssoc.AssocType.One2Many)
+                && associate.isMyEndType(DAssoc.AssocEndType.Many)) {
+            List<Object> associatedObjs = (List) associate.getAssociateObj();
+            associatedObjs.forEach(associatedObj ->
+                    updateAndSaveAssociate(associate, associatedObj));
+        }
+    }
+
+    private void updateAndSaveAssociate(Associate associate, Object associatedObj) {
+        sw.getDom().updateAssociateLink(
+                associatedObj,
+                associate.getMyEndAttribute(),
+                null);
+        try {
+            sw.updateObject((Class) associatedObj.getClass(), associatedObj);
+        } catch (DataSourceException e) {
+            e.printStackTrace();
         }
     }
 

@@ -106,7 +106,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         System.out.println("HANDLING EXCEPTION WITH CAUSE: " + cause);
 
         return handleExceptionInternal(
-                ex, new Object(), new HttpHeaders(),
+                ex, cause, new HttpHeaders(),
                 HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
