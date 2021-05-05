@@ -55,17 +55,16 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
         String genericTypeName = type.getName();
 
         if (generatedServices.containsKey(genericTypeName)) {
-            return (Class<CrudService<T>>)
-                    generatedServices.get(genericTypeName);
+            return (Class) generatedServices.get(genericTypeName);
         }
-
-        return generateServiceType(type, genericTypeName);
+        Class generated = generateServiceType(type, genericTypeName);
+        generatedServices.put(genericTypeName, generated);
+        return generated;
     }
 
     private <T> Class generateServiceType(Class<T> type, String genericTypeName) {
-        final boolean hasInherit = Modifier.isAbstract(type.getModifiers());
-        Class<CrudService> superClass = hasInherit ? absInheritedCrudServiceClass : absCrudServiceClass;
-        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, type);
+        Class<CrudService> superClass = getSuperClass(type);
+        final String pkg = PackageUtils.basePackageFrom(this.outputPackage, type);
         CompilationUnit serviceCompilationUnit =
                 SourceCodeGenerators.generateDefaultGenericInherited(
                         pkg, superClass, crudServiceClass, type);
@@ -74,6 +73,33 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
                 (ClassOrInterfaceDeclaration) serviceCompilationUnit.getTypes().get(0);
 
         // implement constructor
+        implementConstructor(type, superClass, serviceClassDeclaration);
+
+        // @Generated annotation
+        addGeneratedAnnotation(serviceClassDeclaration);
+        String outputFQName = getOutputFQNameFrom(serviceCompilationUnit, serviceClassDeclaration);
+        addServiceAnnotation(serviceClassDeclaration, outputFQName);
+        addImportsOn(serviceCompilationUnit);
+
+        writeToSource(serviceCompilationUnit, serviceClassDeclaration);
+
+        return compileAndReturn(serviceCompilationUnit, outputFQName);
+    }
+
+    private String getOutputFQNameFrom(CompilationUnit serviceCompilationUnit,
+                                       ClassOrInterfaceDeclaration serviceClassDeclaration) {
+        String outputFQName = serviceCompilationUnit.getPackageDeclaration().get().getNameAsString()
+                + "." + serviceClassDeclaration.getNameAsString();
+        return outputFQName;
+    }
+
+    private <T> Class<CrudService> getSuperClass(Class<T> type) {
+        final boolean hasInherit = Modifier.isAbstract(type.getModifiers());
+        Class<CrudService> superClass = hasInherit ? absInheritedCrudServiceClass : absCrudServiceClass;
+        return superClass;
+    }
+
+    private <T> void implementConstructor(Class<T> type, Class<CrudService> superClass, ClassOrInterfaceDeclaration serviceClassDeclaration) {
         ConstructorDeclaration constructorDeclaration =
                 SourceCodeGenerators.generateAutowiredConstructor(
                         serviceClassDeclaration, superClass);
@@ -81,17 +107,28 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
         BlockStmt constructorBody = generateConstructorBody(
                 type, superClass, constructorDeclaration);
         constructorDeclaration.setBody(constructorBody);
+    }
 
-        // @Generated
-        AnnotationExpr generatedAnnotation = new NormalAnnotationExpr(
-                JavaParser.parseName(Generated.class.getSimpleName()),
-                new NodeList<>(
-                        new MemberValuePair("value",
-                                new StringLiteralExpr(getClass().getCanonicalName()))));
-        serviceClassDeclaration.addAnnotation(generatedAnnotation);
+    private Class compileAndReturn(CompilationUnit serviceCompilationUnit, String outputFQName) {
+        try {
+            Class generated = InMemoryJavaCompiler.newInstance()
+                    .ignoreWarnings()
+                    .useParentClassLoader(Thread.currentThread().getContextClassLoader())
+                    .compile(outputFQName, serviceCompilationUnit.toString());
+            return generated;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        String outputFQName = serviceCompilationUnit.getPackageDeclaration().get().getNameAsString()
-                + "." + serviceClassDeclaration.getNameAsString();
+    private void writeToSource(CompilationUnit serviceCompilationUnit, ClassOrInterfaceDeclaration serviceClassDeclaration) {
+        Path outputPath = Path.of(outputFolder,
+                serviceCompilationUnit.getPackageDeclaration().orElse(new PackageDeclaration()).getNameAsString().replace(".", "/"),
+                serviceClassDeclaration.getNameAsString() + ".java");
+        OutputPathUtils.writeToSource(serviceCompilationUnit, outputPath);
+    }
+
+    private void addServiceAnnotation(ClassOrInterfaceDeclaration serviceClassDeclaration, String outputFQName) {
         AnnotationExpr serviceAnnotationExpr = new NormalAnnotationExpr(
                 JavaParser.parseName(Service.class.getSimpleName()),
                 new NodeList<>(
@@ -99,28 +136,24 @@ final class SourceCodeServiceTypeGenerator implements ServiceTypeGenerator {
                                 new StringLiteralExpr(outputFQName))
                 )
         );
-        serviceCompilationUnit.addImport(BiConsumer.class);
-        serviceCompilationUnit.addImport(Service.class.getCanonicalName());
         serviceClassDeclaration.addAnnotation(serviceAnnotationExpr);
+    }
 
-        serviceCompilationUnit.addImport(Qualifier.class.getCanonicalName());
-        serviceCompilationUnit.addImport(InheritanceUtils.class.getCanonicalName());
+    private void addGeneratedAnnotation(ClassOrInterfaceDeclaration serviceClassDeclaration) {
+        AnnotationExpr generatedAnnotation = new NormalAnnotationExpr(
+                JavaParser.parseName(Generated.class.getSimpleName()),
+                new NodeList<>(
+                        new MemberValuePair("value",
+                                new StringLiteralExpr(getClass().getCanonicalName()))));
+        serviceClassDeclaration.addAnnotation(generatedAnnotation);
+    }
 
-        Path outputPath = Path.of(outputFolder,
-                serviceCompilationUnit.getPackageDeclaration().orElse(new PackageDeclaration()).getNameAsString().replace(".", "/"),
-                serviceClassDeclaration.getNameAsString() + ".java");
-        OutputPathUtils.writeToSource(serviceCompilationUnit, outputPath);
+    private void addImportsOn(CompilationUnit serviceCompilationUnit) {
+        serviceCompilationUnit.addImport(BiConsumer.class);
+        serviceCompilationUnit.addImport(Service.class);
 
-        try {
-            Class generated = InMemoryJavaCompiler.newInstance()
-                    .ignoreWarnings()
-                    .useParentClassLoader(Thread.currentThread().getContextClassLoader())
-                    .compile(outputFQName, serviceCompilationUnit.toString());
-            generatedServices.put(genericTypeName, generated);
-            return generated;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        serviceCompilationUnit.addImport(Qualifier.class);
+        serviceCompilationUnit.addImport(InheritanceUtils.class);
     }
 
     private BlockStmt generateConstructorBody(Class type,

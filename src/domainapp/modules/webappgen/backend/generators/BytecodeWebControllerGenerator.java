@@ -24,12 +24,10 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -116,7 +114,7 @@ class BytecodeWebControllerGenerator implements WebControllerGenerator {
         final Class<RestfulController> baseClass = hasInheritance ? inheritRestCtrlClass : restCtrlClass;
         final Inflector inflector = Inflector.getInstance();
         final String endpoint = "/" + inflector.underscore(inflector.pluralize(type.getSimpleName())).replace("_", "-");
-        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, type);
+        final String pkg = PackageUtils.basePackageFrom(this.outputPackage, type);
         final String name = NamingUtils.classNameFrom(pkg, restCtrlClass, "Controller", type);
         Builder<RestfulController> builder = generateControllerType(baseClass, baseImplClass, name, endpoint, type)
                 .annotateType(ofType(ServiceController.class).define("endpoint", endpoint).define("name",
@@ -197,7 +195,7 @@ class BytecodeWebControllerGenerator implements WebControllerGenerator {
         final String endpoint =
             "/" + inflector.underscore(inflector.pluralize(outerType.getSimpleName())).replace("_", "-")
                 + "/{id}/" + inflector.underscore(inflector.pluralize(innerType.getSimpleName())).replace("_", "-");
-        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, outerType);
+        final String pkg = PackageUtils.basePackageFrom(this.outputPackage, outerType);
         final String name = NamingUtils.classNameFrom(pkg, nestedRestCtrlClass, "Controller", outerType, innerType);
 
         final Class<NestedRestfulController> baseClass = nestedRestCtrlClass;

@@ -27,7 +27,7 @@ public final class PackageUtils {
                 .trim();
     }
 
-    public static String actualOutputPathOf(String outputPackage, Class<?> modelClass) {
+    public static String basePackageFrom(String outputPackage, Class<?> modelClass) {
         return outputPackage != null ?
                 outputPackage.concat(".").concat(getShortBaseModulePackage(modelClass))
                 : PackageUtils.getBaseModulePackage(modelClass);

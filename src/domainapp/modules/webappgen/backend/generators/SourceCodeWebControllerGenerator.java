@@ -5,13 +5,11 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.MemberValuePair;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.expr.StringLiteralExpr;
-import com.github.javaparser.ast.stmt.BlockStmt;
 import domainapp.modules.webappgen.backend.annotations.NestedResourceController;
 import domainapp.modules.webappgen.backend.annotations.bridges.AnnotationRep;
 import domainapp.modules.webappgen.backend.annotations.bridges.RestAnnotationAdapter;
@@ -29,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Generated;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -54,6 +51,7 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
     private final RestAnnotationAdapter annotationAdapter;
     private final String outputPackage;
     private final String outputFolder;
+    private final Inflector inflector = Inflector.getInstance();
 
     SourceCodeWebControllerGenerator(String outputPackage, String outputFolder) {
         this(TargetType.SPRING, outputPackage, outputFolder);
@@ -83,13 +81,27 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         }
     }
 
-    @Override
-    public <T1, T2> Class<NestedRestfulController<T1, T2>> getNestedRestfulController(Class<T1> outerType, Class<T2> innerType) {
-        try {
-            return generateNestedRestfulController(outerType, innerType);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
+    private <T> Class<RestfulController<T>> generateRestfulController(Class<T> type)
+            throws IllegalAccessException, IOException, NoSuchMethodException, SecurityException {
+        final boolean hasInheritance = Modifier.isAbstract(type.getModifiers());
+        final Class<RestfulController> baseImplClass = hasInheritance ? inheritRestCtrlClassImpl : restCtrlClassImpl;
+        final Class<RestfulController> baseClass = hasInheritance ? inheritRestCtrlClass : restCtrlClass;
+
+        final String endpoint = buildEndpoint(type);
+        final String pkg = PackageUtils.basePackageFrom(this.outputPackage, type);
+        final String name = buildClassName(restCtrlClass, type);
+
+        final CompilationUnit compilationUnit = SourceCodeGenerators.generateDefaultGenericInherited(
+                pkg, baseImplClass, baseClass, type
+        );
+
+        final ClassOrInterfaceDeclaration classDeclaration = defineClass(compilationUnit);
+
+        SourceCodeGenerators.generateAutowiredConstructor(classDeclaration, baseImplClass);
+
+        addAnnotations(baseClass, endpoint, name, compilationUnit, classDeclaration);
+
+        return saveAndReturnClass(pkg, name, compilationUnit, classDeclaration);
     }
 
     @Override
@@ -97,16 +109,22 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         return annotationAdapter;
     }
 
+    @Override
+    public <T1, T2> Class<NestedRestfulController<T1, T2>> getNestedRestfulController(Class<T1> outerType,
+                                                                                      Class<T2> innerType) {
+        try {
+            return generateNestedRestfulController(outerType, innerType);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     private <T1, T2> Class<NestedRestfulController<T1,T2>> generateNestedRestfulController(
             Class<T1> outerType, Class<T2> innerType) {
         //
-        final Inflector inflector = Inflector.getInstance();
-        final String endpoint =
-                "/" + inflector.underscore(inflector.pluralize(outerType.getSimpleName())).replace("_", "-")
-                        + "/{id}/" + inflector.underscore(inflector.pluralize(innerType.getSimpleName())).replace("_", "-");
-        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, outerType);
-        final String name = NamingUtils.classNameFrom(pkg, nestedRestCtrlClass, "Controller", outerType, innerType)
-                .replace("NestedRestfulController$", "");
+        final String endpoint = buildNestedEndpoint(outerType, innerType);
+        final String pkg = PackageUtils.basePackageFrom(this.outputPackage, outerType);
+        final String name = buildClassName(nestedRestCtrlClass, outerType, innerType);
 
         final Class<NestedRestfulController> baseClass = nestedRestCtrlClass;
         final Class<NestedRestfulController> baseImplClass = nestedRestCtrlImplClass;
@@ -115,15 +133,9 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
                 pkg, baseImplClass, baseClass, outerType, innerType
         );
 
-        final ClassOrInterfaceDeclaration classDeclaration =
-                compilationUnit.getType(0).asClassOrInterfaceDeclaration();
-        classDeclaration.setName(name.substring(name.lastIndexOf(".") + 1)
-            .replace("NestedRestfulController$", ""));
+        final ClassOrInterfaceDeclaration classDeclaration = defineClass(name, compilationUnit);
 
-        AnnotationRep ann = new AnnotationRep(NestedResourceController.class);
-        ann.setValueOf("innerType", inflector.underscore(inflector.pluralize(innerType.getSimpleName())).replace("_", "-"));
-        ann.setValueOf("outerType", inflector.underscore(inflector.pluralize(outerType.getSimpleName())).replace("_", "-"));
-        annotationAdapter.addSourceAnnotation(ann);
+        addSourceAnnotationsFrom(outerType, innerType);
         SourceCodeGenerators.generateAutowiredConstructor(classDeclaration, baseImplClass);
 
         addAnnotations(baseClass, endpoint, name, compilationUnit, classDeclaration);
@@ -131,9 +143,35 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         return saveAndReturnClass(pkg, name, compilationUnit, classDeclaration);
     }
 
-    private Class saveAndReturnClass(String pkg, String name, CompilationUnit compilationUnit, ClassOrInterfaceDeclaration classDeclaration) {
+    private String buildNestedEndpoint(Class outerType, Class innerType) {
+        final String endpoint =
+                "/" + inflector.underscore(inflector.pluralize(outerType.getSimpleName())).replace("_", "-")
+                        + "/{id}/" + inflector.underscore(inflector.pluralize(innerType.getSimpleName())).replace("_", "-");
+        return endpoint;
+    }
+
+    private ClassOrInterfaceDeclaration defineClass(String name, CompilationUnit compilationUnit) {
+        final ClassOrInterfaceDeclaration classDeclaration =
+                compilationUnit.getType(0).asClassOrInterfaceDeclaration();
+        classDeclaration.setName(name.substring(name.lastIndexOf(".") + 1)
+            .replace("NestedRestfulController$", "")
+            .replace("RestfulController$", ""));
+        return classDeclaration;
+    }
+
+    private <T1, T2> void addSourceAnnotationsFrom(Class<T1> outerType, Class<T2> innerType) {
+        AnnotationRep ann = new AnnotationRep(NestedResourceController.class);
+        ann.setValueOf("innerType", inflector.underscore(inflector.pluralize(innerType.getSimpleName())).replace("_", "-"));
+        ann.setValueOf("outerType", inflector.underscore(inflector.pluralize(outerType.getSimpleName())).replace("_", "-"));
+        annotationAdapter.addSourceAnnotation(ann);
+    }
+
+    private Class saveAndReturnClass(String pkg, String name,
+                                     CompilationUnit compilationUnit,
+                                     ClassOrInterfaceDeclaration classDeclaration) {
         Path outputPath = Path.of(outputFolder,
-                compilationUnit.getPackageDeclaration().orElse(new PackageDeclaration()).getNameAsString().replace(".", "/"),
+                compilationUnit.getPackageDeclaration()
+                        .orElse(new PackageDeclaration()).getNameAsString().replace(".", "/"),
                 classDeclaration.getNameAsString() + ".java");
         OutputPathUtils.writeToSource(compilationUnit, outputPath);
         try {
@@ -146,31 +184,24 @@ final class SourceCodeWebControllerGenerator implements WebControllerGenerator {
         }
     }
 
-    private <T> Class<RestfulController<T>> generateRestfulController(Class<T> type)
-            throws IllegalAccessException, IOException, NoSuchMethodException, SecurityException {
-        final boolean hasInheritance = Modifier.isAbstract(type.getModifiers());
-        final Class<RestfulController> baseImplClass = hasInheritance ? inheritRestCtrlClassImpl : restCtrlClassImpl;
-        final Class<RestfulController> baseClass = hasInheritance ? inheritRestCtrlClass : restCtrlClass;
-        final Inflector inflector = Inflector.getInstance();
-        final String endpoint = "/" + inflector.underscore(inflector.pluralize(type.getSimpleName())).replace("_", "-");
-        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, type);
-        final String name = NamingUtils.classNameFrom("", restCtrlClass, "Controller", type)
+    private String buildClassName(Class baseType, Class... genericTypes) {
+        final String name = NamingUtils.classNameFrom("", baseType, "Controller", genericTypes)
+                .replace("NestedRestfulController$", "")
                 .replace("RestfulController$", "");
+        return name;
+    }
 
-        final CompilationUnit compilationUnit = SourceCodeGenerators.generateDefaultGenericInherited(
-                pkg, baseImplClass, baseClass, type
-        );
+    private <T> String buildEndpoint(Class<T> type) {
+        final String endpoint = "/" + inflector.underscore(inflector.pluralize(type.getSimpleName())).replace("_", "-");
+        return endpoint;
+    }
 
+    private ClassOrInterfaceDeclaration defineClass(CompilationUnit compilationUnit) {
         final ClassOrInterfaceDeclaration classDeclaration =
                 compilationUnit.getType(0).asClassOrInterfaceDeclaration();
         classDeclaration.setName(classDeclaration.getNameAsString()
                 .replace("Service", "Controller"));
-
-        SourceCodeGenerators.generateAutowiredConstructor(classDeclaration, baseImplClass);
-
-        addAnnotations(baseClass, endpoint, name, compilationUnit, classDeclaration);
-
-        return saveAndReturnClass(pkg, name, compilationUnit, classDeclaration);
+        return classDeclaration;
     }
 
     private void addAnnotations(Class baseClass, String endpoint, String name, CompilationUnit compilationUnit, ClassOrInterfaceDeclaration classDeclaration) {

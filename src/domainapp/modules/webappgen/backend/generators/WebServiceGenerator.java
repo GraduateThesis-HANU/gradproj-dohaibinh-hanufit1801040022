@@ -52,21 +52,21 @@ public class WebServiceGenerator {
      */
     public void generateWebService(Class... classes) {
         List<Class<?>> ignored = getIgnoredClasses(classes);
-        Class<?> __;
+        Class<?> tempClass;
         for (Class<?> cls : classes) {
             if (ignored.contains(cls)) continue;
             cls = annotationGenerator.generateCircularAnnotations(cls, classes);
             cls = annotationGenerator.generateInheritanceAnnotations(cls);
 
-            __ = serviceTypeGenerator.generateAutowiredServiceType(cls);
-            generatedServiceClasses.put(cls.getCanonicalName(), __);
-            __ = webControllerGenerator.getRestfulController(cls);
-            generatedControllerClasses.add(__);
+            tempClass = serviceTypeGenerator.generateAutowiredServiceType(cls);
+            generatedServiceClasses.put(cls.getCanonicalName(), tempClass);
+            tempClass = webControllerGenerator.getRestfulController(cls);
+            generatedControllerClasses.add(tempClass);
             List<Class<?>> nestedClasses = ClassAssocUtils.getNested(cls);
             for (Class<?> nested : nestedClasses) {
                 if (nested == cls) continue;
-                __ = webControllerGenerator.getNestedRestfulController(cls, nested);
-                generatedControllerClasses.add(__);
+                tempClass = webControllerGenerator.getNestedRestfulController(cls, nested);
+                generatedControllerClasses.add(tempClass);
             }
         }
         List<Class> generatedClasses = new ArrayList<>(generatedServiceClasses.values());

@@ -55,7 +55,7 @@ final class BytecodeServiceTypeGenerator implements ServiceTypeGenerator {
                 generatedServices.get(genericTypeName);
         }
 
-        final String pkg = PackageUtils.actualOutputPathOf(this.outputPackage, type);
+        final String pkg = PackageUtils.basePackageFrom(this.outputPackage, type);
 
         final String name = NamingUtils.classNameFrom(
                 pkg, crudServiceClass, "Service", type);
