@@ -18,7 +18,7 @@ import domainapp.modules.mccl.model.MCC;
 import domainapp.modules.webappgen.frontend.generators.utils.MCCUtils;
 import domainapp.modules.webappgen.frontend.models.nonviews.AppEntryPoint;
 import domainapp.modules.webappgen.frontend.models.nonviews.FrontendModule;
-import domainapp.modules.webappgen.frontend.models.views.HasSubmodule;
+import domainapp.modules.webappgen.frontend.models.views.HasSubView;
 import domainapp.modules.webappgen.frontend.models.views.View;
 
 import java.io.File;
@@ -98,9 +98,9 @@ public final class ViewBootstrapper {
                 String fileName = view.getFileName() + EXTENSION;
                 String content = view.getAsString();
                 saveFile(folder, fileName, content);
-                if (view instanceof HasSubmodule) {
-                    HasSubmodule viewWithSubmodule = (HasSubmodule) view;
-                    for (View submodule : viewWithSubmodule.getSubmoduleViews()) {
+                if (view instanceof HasSubView) {
+                    HasSubView viewWithSubview = (HasSubView) view;
+                    for (View submodule : viewWithSubview.getSubViews()) {
                         String _fileName = submodule.getFileName() + EXTENSION;
                         String _content = submodule.getAsString();
                         saveFile(folder, _fileName, _content);

@@ -48,7 +48,7 @@ public class ViewTest {
         MCCRegistry.getInstance().add(MCCUtils.readMCC(CourseModule.class, ModuleCourseModule.class));
         FormView formView = new FormView(viewDesc);
         System.out.println(formView.getAsString());
-        System.out.println(formView.getSubmoduleViews().stream().map(view -> view.getAsString()).collect(Collectors.toList()));
+        System.out.println(formView.getSubViews().stream().map(view -> view.getAsString()).collect(Collectors.toList()));
 //        View formView = new FormViewWithTypeSelect(CourseModule.class);
 //        System.out.println(formView.getAsString());
 //        View listView = new ListView(viewDesc);

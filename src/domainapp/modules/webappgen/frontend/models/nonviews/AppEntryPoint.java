@@ -37,6 +37,13 @@ public class AppEntryPoint implements JsFrontendElement {
         }
     }
 
+    private Collection<String> getImports() {
+        return frontendModules.stream()
+                .map(module -> String.format("import %s from './%s'",
+                        module.getModuleAlias(), module.getFolder()))
+                .collect(Collectors.toList());
+    }
+
     public Collection<FrontendModule> getFrontendModules() {
         return frontendModules;
     }
@@ -54,6 +61,7 @@ public class AppEntryPoint implements JsFrontendElement {
     public String getAsString() {
         try {
             return getTemplate().getAsString()
+                    .replace("{{ view.main.imports }}", getImports().stream().reduce("", (s1, s2) -> s1 + "\n" + s2))
                     .replace("{{ view.main.welcome }}", welcomeText)
                     .replace("{{ view.main.appName }}", appName)
                     .replace("{{ view.main.modules }}",
@@ -116,7 +124,7 @@ public class AppEntryPoint implements JsFrontendElement {
         }
 
         private static String toPluralHumanString(String original) {
-            return inflector.capitalize(inflector.pluralize(inflector.humanize(original)));
+            return inflector.capitalize(inflector.pluralize(inflector.humanize(inflector.underscore(original))));
         }
 
         public String getName() {

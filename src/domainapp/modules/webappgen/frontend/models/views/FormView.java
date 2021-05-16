@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
  * +- Generate the form view
  * +- Generate form view for inheritance tree
  */
-class FormView extends View implements HasSubmodule {
+class FormView extends View implements HasSubView {
     private final String backingClass;
-    private final Collection<SubmoduleView> submoduleViews = new ArrayList<>();
+    private final Collection<SubView> subViews = new ArrayList<>();
 
     public FormView(MCC viewDesc) {
         super(viewDesc, JsTemplates.FORM);
@@ -40,17 +40,17 @@ class FormView extends View implements HasSubmodule {
     }
 
     private void populateSubmodules() {
-        Collection<SubmoduleView> submoduleViews = getReferredViews().stream()
+        Collection<SubView> subViews = getReferredViews().stream()
                 .map(referredView -> referredView.replace("Submodule", ""))
                 .map(referredView ->
-                        new SubmoduleView(referredView,
+                        new SubView(referredView,
                                 Inflector.getInstance().lowerCamelCase(this.backingClass)))
                 .collect(Collectors.toList());
-        this.submoduleViews.addAll(submoduleViews);
+        this.subViews.addAll(subViews);
     }
 
-    public Collection<SubmoduleView> getSubmoduleViews() {
-        return submoduleViews;
+    public Collection<SubView> getSubViews() {
+        return subViews;
     }
 
     @Override

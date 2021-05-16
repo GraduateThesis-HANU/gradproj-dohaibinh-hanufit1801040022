@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Container } from 'react-bootstrap';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import constants from './common/Constants';
 import Navigation from './common/Navigation';
+{{ view.main.imports }}
 
 export default class App extends React.Component {
   constructor(props) {

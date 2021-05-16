@@ -63,6 +63,10 @@ public class FrontendModule implements JsFrontendElement {
         return this.viewDesc;
     }
 
+    public String getModuleAlias() {
+        return this.viewDesc.getName();
+    }
+
     public String getFolder() {
         return inflector.pluralize(
                 inflector.underscore(

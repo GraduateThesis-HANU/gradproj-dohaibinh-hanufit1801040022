@@ -1,12 +1,10 @@
 package domainapp.modules.webappgen.frontend.models.views;
 
-import ch.qos.logback.core.util.COWArrayList;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import domainapp.modules.common.model.parser.ClassAST;
 import domainapp.modules.mccl.model.MCC;
 import domainapp.modules.webappgen.frontend.generators.utils.InheritanceUtils;
 import domainapp.modules.webappgen.frontend.generators.utils.MCCUtils;
-import domainapp.modules.webappgen.frontend.models.views.fields.ViewField;
 import domainapp.modules.webappgen.frontend.templates.JsTemplates;
 import org.modeshape.common.text.Inflector;
 
@@ -16,12 +14,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-class FormViewWithTypeSelect extends View implements HasSubmodule {
+class FormViewWithTypeSelect extends View implements HasSubView {
     private static final Inflector inflector = Inflector.getInstance();
     private final Map<String, String> subtypeMap;
     private final Map<String, FormView> formViewsBySubType = new LinkedHashMap<>();
     private String backingClass;
-    private Collection<SubmoduleView> submoduleViews;
+    private Collection<SubView> subViews;
 
     public FormViewWithTypeSelect(Class inheritanceRoot) {
         super(JsTemplates.FORM,
@@ -33,9 +31,9 @@ class FormViewWithTypeSelect extends View implements HasSubmodule {
     }
 
     @Override
-    public Collection<SubmoduleView> getSubmoduleViews() {
+    public Collection<SubView> getSubViews() {
         return formViewsBySubType.values().stream()
-                .flatMap(form -> form.getSubmoduleViews().stream())
+                .flatMap(form -> form.getSubViews().stream())
                 .collect(Collectors.toList());
     }
 
