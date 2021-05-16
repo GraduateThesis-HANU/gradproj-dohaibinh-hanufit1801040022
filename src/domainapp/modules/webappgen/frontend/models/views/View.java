@@ -28,14 +28,18 @@ public abstract class View implements ViewableElement {
     private final Collection<String> referredViews = new HashSet<>();
     private final Collection<ViewField> viewFields = new ArrayList<>();
 
+    private static String escapeQuotes(String str) {
+        return str.replace("\"", "").replace("'", "");
+    }
+
     protected View(JsTemplate template, String title) {
         this.template = template;
-        this.title = title;
+        this.title = escapeQuotes(title);
     }
 
     protected View(MCC viewDesc, JsTemplate template, boolean discardNonMccFields) {
         this.template = template;
-        this.title = createTitle(viewDesc);
+        this.title = escapeQuotes(createTitle(viewDesc));
         // init view fields
         Collection<FieldDeclaration> fields = viewDesc.getViewFields();
         Collection<FieldDeclaration> domainFields = viewDesc.getDomainClass().getDomainFields();
@@ -53,7 +57,7 @@ public abstract class View implements ViewableElement {
 
     public View(ClassOrInterfaceDeclaration dClass, JsTemplate template) {
         this.template = template;
-        this.title = createTitle(dClass);
+        this.title = escapeQuotes(createTitle(dClass));
         // init view fields
         Collection<FieldDeclaration> domainFields =
                 ParserToolkit.getDomainFields(dClass);
@@ -147,7 +151,8 @@ public abstract class View implements ViewableElement {
                                 .findFirst())
                         .map(ParserToolkit::parseAnoMemberValue)
                         .map(ParserToolkit::convertPropValuetoString)
-                        .orElse(ParserToolkit.getFieldName(domainField));
+                        .orElse(inflector.capitalize(inflector.humanize(
+                                inflector.underscore(ParserToolkit.getFieldName(domainField)))));
             }
             return ViewFieldFactory.create(domainFieldDef, label);
         }

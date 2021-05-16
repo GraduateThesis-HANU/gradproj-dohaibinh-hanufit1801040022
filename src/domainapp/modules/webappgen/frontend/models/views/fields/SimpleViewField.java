@@ -13,6 +13,7 @@ import java.util.Objects;
 class SimpleViewField extends ViewField {
     private final String label;
     private boolean isDisabled;
+    private boolean needApiCall = false;
 
     private SimpleViewField(FieldDef fieldDef, String label) {
         super(fieldDef);
@@ -38,6 +39,10 @@ class SimpleViewField extends ViewField {
 
     private boolean isDisabled() {
         return isDisabled;
+    }
+
+    void setNeedApiCall(boolean needApiCall) {
+        this.needApiCall = needApiCall;
     }
 
     void setDisabled(boolean newDisabledState) {
@@ -97,6 +102,7 @@ class SimpleViewField extends ViewField {
                 .replace("{{ fieldLabel }}", getLabel())
                 .replace("{{ fieldType }}", getInputType())
                 .replace("{{ backingField }}", getBackingField())
-                .replace("{{ disabledFlag }}", this.isDisabled() ? "disabled" : "");
+                .replace("{{ disabledFlag }}", this.isDisabled() ? "disabled" : "")
+                .replace("{{ needApiCall }}", Boolean.toString(this.needApiCall));
     }
 }

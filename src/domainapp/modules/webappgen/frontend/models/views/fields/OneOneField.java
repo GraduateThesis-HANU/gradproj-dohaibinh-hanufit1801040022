@@ -11,8 +11,6 @@ class OneOneField extends AssociativeInputField {
 
     public OneOneField(FieldDef fieldDef, FieldDef idFieldDef, String idFieldLabel) {
         super(fieldDef, idFieldDef, idFieldLabel);
-        ((SimpleViewField)this.getIdField()).setDisabled(false);
-        ((SimpleViewField)this.getDetailsField()).setDisabled(true);
     }
 
     @Override

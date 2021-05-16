@@ -20,11 +20,13 @@ import com.hanu.courseman.modules.student.model.Student;
 import domainapp.basics.exceptions.DataSourceException;
 import domainapp.basics.exceptions.NotFoundException;
 import domainapp.basics.exceptions.NotPossibleException;
+import domainapp.modules.mccl.model.MCC;
 import domainapp.modules.webappgen.backend.annotations.bridges.TargetType;
 import domainapp.modules.webappgen.backend.base.controllers.ServiceRegistry;
 import domainapp.modules.webappgen.backend.base.services.CrudService;
 import domainapp.modules.webappgen.backend.generators.GenerationMode;
 import domainapp.modules.webappgen.backend.generators.WebServiceGenerator;
+import domainapp.modules.webappgen.frontend.bootstrap.ViewBootstrapper;
 import domainapp.modules.webappgen.frontend.generators.ViewAppGenerator;
 import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
 import domainapp.software.SoftwareFactory;
@@ -97,13 +99,18 @@ public class CourseManAppGenerator {
 
             ViewAppGenerator generator = new ViewAppGenerator(
                     frontendOutputPath, sccClass, ModuleMain.class);
+            ViewBootstrapper bootstrapper = new ViewBootstrapper(
+                    frontendOutputPath, sccClass, ModuleMain.class,
+                    models, modules
+            );
 
             final AtomicInteger counter = new AtomicInteger();
             for (Class moduleClass : modules) {
                 generator.addModule(models[counter.getAndIncrement()], moduleClass);
             }
 
-            generator.generate();
+//            generator.generate();
+            bootstrapper.bootstrapAndSave();
         }
     }
 

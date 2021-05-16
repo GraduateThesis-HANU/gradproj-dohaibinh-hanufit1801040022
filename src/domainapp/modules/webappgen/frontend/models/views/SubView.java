@@ -7,6 +7,7 @@ class SubView extends View {
 
     private final String referredClassName;
     private final String parent;
+    private final Inflector inflector = Inflector.getInstance();
 
     public SubView(String referredClassName, String parent) {
         super(JsTemplates.SUBFORM, "");
@@ -23,7 +24,7 @@ class SubView extends View {
     public String getAsString() {
         return getTemplate().getAsString()
                 .replace("{{ view.name.module }}", referredClassName.concat("Module"))
-                .replace("{{ view.dir }}", Inflector.getInstance().underscore(referredClassName))
+                .replace("{{ view.dir }}", inflector.pluralize(inflector.underscore(referredClassName)).replace("_", "-"))
                 .replace("{{ view.name.submodule }}", referredClassName.concat("Submodule"))
                 .replace("{{ view.parent }}", parent);
     }

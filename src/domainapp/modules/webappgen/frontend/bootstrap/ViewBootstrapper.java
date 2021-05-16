@@ -16,6 +16,7 @@ import com.hanu.courseman.modules.studentclass.ModuleStudentClass;
 import com.hanu.courseman.modules.studentclass.model.StudentClass;
 import domainapp.modules.mccl.model.MCC;
 import domainapp.modules.webappgen.frontend.generators.utils.MCCUtils;
+import domainapp.modules.webappgen.frontend.models.common.MCCRegistry;
 import domainapp.modules.webappgen.frontend.models.nonviews.AppEntryPoint;
 import domainapp.modules.webappgen.frontend.models.nonviews.FrontendModule;
 import domainapp.modules.webappgen.frontend.models.views.HasSubView;
@@ -27,6 +28,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public final class ViewBootstrapper {
     private static final String EXTENSION = ".js";
@@ -36,14 +40,20 @@ public final class ViewBootstrapper {
     private final Class sccClass;
     private MCC[] modules;
 
-    public ViewBootstrapper(String projectSrcDir,
-                            Class sccClass, Class moduleMainClass,
-                            Class[] models, MCC[] modules) {
+    public ViewBootstrapper(final String projectSrcDir,
+                            final Class sccClass, final Class moduleMainClass,
+                            final Class[] models, final Class[] mccClasses) {
         this.projectSrcDir = projectSrcDir;
         this.sccClass = sccClass;
         this.moduleMainClass = moduleMainClass;
         this.models = models;
-        this.modules = modules;
+        this.modules = IntStream.range(0, mccClasses.length)
+                .mapToObj(i -> MCCUtils.readMCC(models[i], mccClasses[i]))
+                .collect(Collectors.toList())
+                .toArray(new MCC[mccClasses.length]);
+        for (MCC mcc : modules) {
+            MCCRegistry.getInstance().add(mcc);
+        }
     }
 
     private Map<Class, MCC> getModelModuleMap() {
@@ -145,10 +155,10 @@ public final class ViewBootstrapper {
 
         Class sccClass = SCC1.class;
 
-        ViewBootstrapper bootstrapper = new ViewBootstrapper(
-                "/Users/binh_dh/Downloads/generated", sccClass, ModuleMain.class,
-                models, mccs);
-        System.out.println(bootstrapper);
-        bootstrapper.bootstrapAndSave();
+//        ViewBootstrapper bootstrapper = new ViewBootstrapper(
+//                "/Users/binh_dh/Downloads/generated", sccClass, ModuleMain.class,
+//                models, mccs);
+//        System.out.println(bootstrapper);
+//        bootstrapper.bootstrapAndSave();
     }
 }

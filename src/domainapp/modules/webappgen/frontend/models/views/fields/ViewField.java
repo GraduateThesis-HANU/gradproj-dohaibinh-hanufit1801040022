@@ -80,9 +80,9 @@ public abstract class ViewField implements ViewableElement, Comparable<ViewField
             }
         }
 
-        if (thatDomainType.isDomainReferenceType()) {
-            return -that.compareTo(this);
-        }
+//        if (thatDomainType.isDomainReferenceType()) {
+//            return -that.compareTo(this);
+//        }
 
         return 0;
     }

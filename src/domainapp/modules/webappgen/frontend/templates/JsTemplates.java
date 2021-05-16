@@ -44,7 +44,7 @@ public enum JsTemplates implements JsTemplate {
                     "  <Form.Label>{{ fieldLabel }}</Form.Label>\n" +
                     "  <FormControl type=\"{{ fieldType }}\"" +
                     " value={this.renderObject(\"current.{{ backingField }}\")}" +
-                    " onChange={(e) => this.props.handleStateChange(\"current.{{ backingField }}\", e.target.value, false)}" +
+                    " onChange={(e) => this.props.handleStateChange(\"current.{{ backingField }}\", e.target.value, {{ needApiCall }})}" +
                     " {{ disabledFlag }} />\n" +
                     "</FormGroup>";
         }
@@ -100,7 +100,7 @@ public enum JsTemplates implements JsTemplate {
     MANY_ONE_INPUT_FIELD {
         @Override
         public String getAsString() {
-            return "{ this.props.excludes && this.props.excludes.includes(\"studentClass\") ? \"\" : <><FormGroup className='d-flex flex-wrap justify-content-between align-items-end'><Col md={2.5} className='px-0'>\n" +
+            return "{ this.props.excludes && this.props.excludes.includes(\"{{ classNameCamelCase }}\") ? \"\" : <><FormGroup className='d-flex flex-wrap justify-content-between align-items-end'><Col md={2.5} className='px-0'>\n" +
                     "  {{ idField }}" +
                     "</Col>\n" +
                     "<Col md={9} className='px-0'>\n" +

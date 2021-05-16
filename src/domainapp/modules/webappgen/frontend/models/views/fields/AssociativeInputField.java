@@ -20,6 +20,9 @@ public abstract class AssociativeInputField extends ViewField {
                         inflector.underscore(
                                 fieldDef.getType().asClassOrInterfaceType()
                                         .getNameAsString())));
+        ((SimpleViewField)this.getIdField()).setDisabled(false);
+        ((SimpleViewField)this.getIdField()).setNeedApiCall(true);
+        ((SimpleViewField)this.getDetailsField()).setDisabled(true);
     }
 
     public ViewField getIdField() {
@@ -41,6 +44,9 @@ public abstract class AssociativeInputField extends ViewField {
                 .replace("{{ idField }}",
                         removeUnnecessaryFormGroup(this.getIdField().getAsString()))
                 .replace("{{ detailsField }}",
-                        removeUnnecessaryFormGroup(this.getDetailsField().getAsString()));
+                        removeUnnecessaryFormGroup(this.getDetailsField().getAsString()))
+                .replace("{{ classNameCamelCase }}",
+                        inflector.lowerCamelCase(this.detailsField.getFieldDef().getType()
+                                .asClassOrInterfaceType().getNameAsString()));
     }
 }
