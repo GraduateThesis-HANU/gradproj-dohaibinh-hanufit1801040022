@@ -23,7 +23,7 @@ export default class {{ view.name.main }} extends BaseMainForm {
   renderTitle() {
     return (
       <>
-        <h2 className="text-center">Manage: {{ view.title }}</h2>
+        <h2 className="text-center">{{ view.title }}</h2>
       </>
     );
   }
@@ -41,9 +41,9 @@ export default class {{ view.name.main }} extends BaseMainForm {
       handleTypeChange={(e) => this.setState({ current: {...this.state.current, type: e.target.value} })} />;
   }
 
-  renderSubmodules() {
-    return (<>
-      {{ view.submodules }}
-      </>);
-  }
+  // renderSubmodules() {
+  //   return (<>
+  //     {{ view.submodules }}
+  //     </>);
+  // }
 }

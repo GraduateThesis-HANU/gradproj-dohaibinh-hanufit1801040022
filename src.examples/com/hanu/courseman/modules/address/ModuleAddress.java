@@ -13,7 +13,7 @@ import domainapp.modules.webappgen.frontend.examples.model.Student;
         viewDesc = @ViewDesc(formTitle = "Form: Address", imageIcon = "Address.png", domainClassLabel = "Address", view = domainapp.basics.core.View.class), controllerDesc = @domainapp.basics.model.meta.module.controller.ControllerDesc())
 public class ModuleAddress {
 
-    @AttributeDesc(label = "Address")
+    @AttributeDesc(label = "Form: Address")
     private String title;
 
     @AttributeDesc(label = "ID")

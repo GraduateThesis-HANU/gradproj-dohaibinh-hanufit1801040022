@@ -10,7 +10,7 @@ import domainapp.basics.model.meta.module.view.AttributeDesc;
 import domainapp.modules.common.model.parser.ClassAST;
 import domainapp.modules.common.parser.ParserToolkit;
 import domainapp.modules.common.parser.statespace.metadef.MetaAttrDef;
-import domainapp.modules.webappgen.frontend.examples.utils.InheritanceUtils;
+import domainapp.modules.webappgen.frontend.generators.utils.InheritanceUtils;
 import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
 import domainapp.modules.webappgen.frontend.generators.utils.FileUtils;
 import domainapp.modules.webappgen.frontend.generators.utils.MCCUtils;

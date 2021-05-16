@@ -46,7 +46,7 @@ isPrimary=true
 )
 public class ModuleEnrolment  {
 
-  @AttributeDesc(label="Enrolment")
+  @AttributeDesc(label="Manage Enrolments")
   private String title;
   
   // attributes

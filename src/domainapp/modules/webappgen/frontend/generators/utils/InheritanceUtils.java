@@ -1,4 +1,8 @@
-package domainapp.modules.webappgen.frontend.examples.utils;
+package domainapp.modules.webappgen.frontend.generators.utils;
+
+import domainapp.modules.webappgen.frontend.examples.utils.ClassUtils;
+import domainapp.modules.webappgen.frontend.examples.utils.NamingUtils;
+import domainapp.modules.webappgen.frontend.examples.utils.PackageUtils;
 
 import java.io.IOException;
 import java.util.HashMap;

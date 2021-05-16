@@ -37,7 +37,7 @@ isPrimary=true
 ,setUpDesc=@SetUpDesc(postSetUp=CopyResourceFilesCommand.class)
 )
 public class ModuleCourseModule  {
-  @AttributeDesc(label="Course Module")
+  @AttributeDesc(label="Form: Course Module")
   private String title;
   
   // attributes

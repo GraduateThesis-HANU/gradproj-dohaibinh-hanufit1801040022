@@ -1,6 +1,7 @@
 import React from "react";
 import BaseListView from "../base/BaseListView";
-import {{ view.name.listItem }} from "./{{ view.name.listItem }}";
+import BaseListItemView from "../base/BaseListItemView";
+// import {{ view.name.listItem }} from "./{{ view.name.listItem }}";
 
 export default class {{ view.name.list }} extends BaseListView {
   renderVisibleColumns() {

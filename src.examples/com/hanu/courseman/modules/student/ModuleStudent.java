@@ -28,7 +28,7 @@ import java.util.Collection;
                 view = View.class),
         controllerDesc = @ControllerDesc())
 public class ModuleStudent {
-  @AttributeDesc(label = "Students")
+  @AttributeDesc(label = "Manage Students")
   private String title;
 
   @AttributeDesc(label = "ID")

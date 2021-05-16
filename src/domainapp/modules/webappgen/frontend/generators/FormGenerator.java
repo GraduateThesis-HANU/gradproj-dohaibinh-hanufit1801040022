@@ -12,7 +12,7 @@ import domainapp.basics.model.meta.module.view.AttributeDesc;
 import domainapp.modules.common.model.parser.ClassAST;
 import domainapp.modules.common.parser.ParserToolkit;
 import domainapp.modules.common.parser.statespace.metadef.MetaAttrDef;
-import domainapp.modules.webappgen.frontend.examples.utils.InheritanceUtils;
+import domainapp.modules.webappgen.frontend.generators.utils.InheritanceUtils;
 import domainapp.modules.webappgen.frontend.generators.utils.ClassAssocUtils;
 import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
 import domainapp.modules.webappgen.frontend.generators.utils.MCCUtils;
@@ -345,10 +345,8 @@ public class FormGenerator implements ViewGenerator {
 
     Collection<String> generateViewInputFields(ClassAST classAST,
             Collection<FieldDeclaration> viewFields) {
-        boolean shouldHaveId = true;
         Collection<String> formGroups = new LinkedList<>();
         for (FieldDeclaration viewField : viewFields) {
-            if (!shouldHaveId && ViewStateUtils.isIdOrAuto(viewField)) continue;
             String viewInputField = generateInputField(viewField, mcc, classAST.getCls());
             formGroups.add(viewInputField);
         }
@@ -441,10 +439,11 @@ public class FormGenerator implements ViewGenerator {
     }
 
     private String generateInputField(FieldDeclaration field,
-                                             MCC mcc,
-                                             ClassOrInterfaceDeclaration domainClass) {
+                                      MCC mcc,
+                                      ClassOrInterfaceDeclaration domainClass) {
         String label = generateInputLabel(field, mcc, domainClass);
-        MetaAttrDef dAttr = ParserToolkit.getFieldDefFull(field).getAnnotation(DAttr.class);
+        MetaAttrDef dAttr = ParserToolkit.getFieldDefFull(field)
+                                        .getAnnotation(DAttr.class);
         Boolean isId = (Boolean) getAnnotationAttrValue(dAttr, "id");
         Boolean isAuto = (Boolean) getAnnotationAttrValue(dAttr, "auto");
         boolean disabled = (isId != null && isId) || (isAuto != null && isAuto);
@@ -541,9 +540,6 @@ public class FormGenerator implements ViewGenerator {
     }
 
     private String generateAssociateInput(String label, FieldDeclaration field, DAttr.Type type, DAssoc.AssocType assocType) {
-        String inputType = type.isString() ? "text" :
-                            type.isNumeric() ? "number" :
-                            type.isColor() ? "color" : "date";
         final AtomicInteger autoFieldWidth = new AtomicInteger(9);
 
         StringBuilder extra = new StringBuilder();
@@ -559,7 +555,7 @@ public class FormGenerator implements ViewGenerator {
                     "<%sSubmodule compact={true}" +
                             "  mode='submodule'\n" +
                             "  viewType={this.props.viewType}\n" +
-                            "  title=\"Manage %s\"\n" +
+                            "  title=\"%s\"\n" +
                             "  current={this.props.current.%s}\n" +
                             "  parentName=''\tparent={this.props.current}\n" +
                             "  parentId={this.props.currentId}\n" +

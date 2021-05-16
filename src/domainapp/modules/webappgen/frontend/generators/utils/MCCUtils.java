@@ -13,6 +13,7 @@ import domainapp.modules.mccl.model.MCC;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -61,11 +62,13 @@ public class MCCUtils {
 
     public static Path getFullPath(Class<?> cls) {
         Path projectPath = getProjectPath(cls);
-//        Path fullPath = projectPath.resolve("src/main/java")
-//                .resolve(getLongFileNameWithoutSuffix(cls).concat(".java"));
-//        Path fullPath = projectPath.resolve("src/")
-//                .resolve(getLongFileNameWithoutSuffix(cls).concat(".java"));
-        Path fullPath = projectPath.resolve("src.examples/")
+        Path fullPath = projectPath.resolve("src/main/java")
+                .resolve(getLongFileNameWithoutSuffix(cls).concat(".java"));
+        if (Files.exists(fullPath)) return fullPath;
+        fullPath = projectPath.resolve("src/")
+                .resolve(getLongFileNameWithoutSuffix(cls).concat(".java"));
+        if (Files.exists(fullPath)) return fullPath;
+        fullPath = projectPath.resolve("src.examples/")
                 .resolve(getLongFileNameWithoutSuffix(cls).concat(".java"));
         return fullPath;
     }

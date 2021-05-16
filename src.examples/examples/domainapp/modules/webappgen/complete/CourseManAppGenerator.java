@@ -76,8 +76,8 @@ public class CourseManAppGenerator {
 
     private static final String backendTargetPackage = "com.hanu.courseman.backend";
     private static final String backendOutputPath = "src.examples";
-    private static final String frontendOutputPath = "src.examples/com/hanu/courseman/frontend";
-//    private static final String frontendOutputPath = "/Users/binh_dh/vscode/courseman-examples-2/src";
+//    private static final String frontendOutputPath = "src.examples/com/hanu/courseman/frontend";
+    private static final String frontendOutputPath = "/Users/binh_dh/vscode/courseman-examples-2/src";
 
     public static void main(String[] args) {
         FrontendGenerator.setupAndGen();
