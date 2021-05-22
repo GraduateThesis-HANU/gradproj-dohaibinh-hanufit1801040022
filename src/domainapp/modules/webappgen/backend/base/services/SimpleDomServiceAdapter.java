@@ -321,7 +321,7 @@ public class SimpleDomServiceAdapter<T> implements CrudService<T> {
         if (toDelete instanceof Publisher) {
             // remove link
             Publisher eventSourceObj = (Publisher) toDelete;
-            eventSourceObj.notify(CMEventType.OnRemoved, eventSourceObj.getEventSource(), toDelete);
+            eventSourceObj.notify(CMEventType.OnRemoved, eventSourceObj.getEventSource(), associate.getAssociateObj());
             eventSourceObj.removeAllSubscribers();
         }
         if (associate.isAssociationType(DAssoc.AssocType.One2One)) {

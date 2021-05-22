@@ -148,7 +148,7 @@ public abstract class DefaultNestedRestfulController<T1, T2>
             throw new NoSuchElementException("Not found: Page #" + pageNumber);
         }
         final int pageCount = size / itemPerPage + size % itemPerPage > 0 ? 1 : 0;
-        final Collection<T> pageContent = entities.stream().skip(skip).limit(itemPerPage).collect(Collectors.toList());
+        final Collection<T> pageContent = entities.stream().distinct().skip(skip).limit(itemPerPage).collect(Collectors.toList());
         return new Page<>(pageNumber, pageCount, pageContent);
     }
 
