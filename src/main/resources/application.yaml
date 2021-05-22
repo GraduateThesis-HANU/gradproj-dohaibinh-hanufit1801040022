@@ -17,4 +17,5 @@ origin: props
 
 logging:
    level:
-      root: DEBUG
+#      root: DEBUG
+      root: WARN

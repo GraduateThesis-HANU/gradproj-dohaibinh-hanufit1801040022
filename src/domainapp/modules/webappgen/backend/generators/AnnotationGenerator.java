@@ -1,9 +1,6 @@
 package domainapp.modules.webappgen.backend.generators;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.*;
 import domainapp.modules.webappgen.backend.utils.InheritanceUtils;
 import domainapp.modules.webappgen.backend.utils.NamingUtils;
 import domainapp.modules.webappgen.backend.utils.PackageUtils;
@@ -61,6 +58,11 @@ final class AnnotationGenerator {
             Builder<?> builder = new ByteBuddy().rebase(cls);
             final String[] ignoredFields = getIgnoredFields(defined);
             for (Field f : cls.getDeclaredFields()) {
+                if (!f.isAnnotationPresent(JsonProperty.class)) {
+                    builder = builder.field(is(f))
+                            .annotateField(
+                                    ofType(JsonProperty.class).build());
+                }
                 if (!isDefinedTypeField(f)) continue;
                 builder = builder.field(is(f))
                     .annotateField(

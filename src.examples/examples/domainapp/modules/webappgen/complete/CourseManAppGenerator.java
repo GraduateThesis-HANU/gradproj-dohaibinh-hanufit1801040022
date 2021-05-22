@@ -1,6 +1,8 @@
 package examples.domainapp.modules.webappgen.complete;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.hanu.courseman.SCC1;
 import com.hanu.courseman.modules.ModuleMain;
@@ -12,26 +14,23 @@ import com.hanu.courseman.modules.coursemodule.model.CourseModule;
 import com.hanu.courseman.modules.coursemodule.model.ElectiveModule;
 import com.hanu.courseman.modules.enrolment.ModuleEnrolment;
 import com.hanu.courseman.modules.enrolment.model.Enrolment;
-import com.hanu.courseman.modules.studentclass.ModuleStudentClass;
-import com.hanu.courseman.modules.studentclass.model.StudentClass;
 import com.hanu.courseman.modules.student.ModuleStudent;
 import com.hanu.courseman.modules.student.model.Gender;
 import com.hanu.courseman.modules.student.model.Student;
+import com.hanu.courseman.modules.studentclass.ModuleStudentClass;
+import com.hanu.courseman.modules.studentclass.model.StudentClass;
 import domainapp.basics.exceptions.DataSourceException;
 import domainapp.basics.exceptions.NotFoundException;
 import domainapp.basics.exceptions.NotPossibleException;
-import domainapp.modules.mccl.model.MCC;
 import domainapp.modules.webappgen.backend.annotations.bridges.TargetType;
 import domainapp.modules.webappgen.backend.base.controllers.ServiceRegistry;
 import domainapp.modules.webappgen.backend.base.services.CrudService;
 import domainapp.modules.webappgen.backend.generators.GenerationMode;
 import domainapp.modules.webappgen.backend.generators.WebServiceGenerator;
 import domainapp.modules.webappgen.frontend.bootstrap.ViewBootstrapper;
-import domainapp.modules.webappgen.frontend.generators.ViewAppGenerator;
 import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
 import domainapp.software.SoftwareFactory;
 import domainapp.softwareimpl.SoftwareImpl;
-import org.modeshape.common.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -41,6 +40,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -49,7 +49,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The software generator for CourseManApp.
@@ -76,6 +75,11 @@ public class CourseManAppGenerator {
             ModuleStudentClass.class
     };
 
+    static {
+        DomainTypeRegistry.getInstance().addDomainTypes(models);
+        DomainTypeRegistry.getInstance().addDomainType(Gender.class);
+    }
+
     private static final String backendTargetPackage = "com.hanu.courseman.backend";
     private static final String backendOutputPath = "src.examples";
 //    private static final String frontendOutputPath = "src.examples/com/hanu/courseman/frontend";
@@ -87,30 +91,24 @@ public class CourseManAppGenerator {
     }
 
     /**
+     * @author binh_dh
      * Generate the frontend code to a specified package.
      */
     public static class FrontendGenerator {
-        static {
-            DomainTypeRegistry.getInstance().addDomainTypes(models);
-            DomainTypeRegistry.getInstance().addDomainType(Gender.class);
-        }
+
         public static void setupAndGen() {
             Class sccClass = SCC1.class;
 
-            ViewAppGenerator generator = new ViewAppGenerator(
-                    frontendOutputPath, sccClass, ModuleMain.class);
             ViewBootstrapper bootstrapper = new ViewBootstrapper(
                     frontendOutputPath, sccClass, ModuleMain.class,
                     models, modules
             );
 
-            final AtomicInteger counter = new AtomicInteger();
-            for (Class moduleClass : modules) {
-                generator.addModule(models[counter.getAndIncrement()], moduleClass);
-            }
-
-//            generator.generate();
             bootstrapper.bootstrapAndSave();
+        }
+
+        public static void main(String[] args) {
+            setupAndGen();
         }
     }
 

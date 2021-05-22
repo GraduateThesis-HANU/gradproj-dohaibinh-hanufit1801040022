@@ -2,9 +2,12 @@ package com.hanu.courseman.modules.enrolment.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.hanu.courseman.modules.coursemodule.model.CourseModule;
 import com.hanu.courseman.modules.student.model.Student;
+import com.hanu.courseman.utils.Deserializers;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.*;
 import domainapp.basics.model.meta.DAssoc.AssocEndType;
@@ -39,12 +42,16 @@ public class Enrolment implements Comparable, Publisher {
   @DAssoc(ascName = "student-has-enrolments", role = "enrolment",
           ascType = AssocType.One2Many, endType = AssocEndType.Many,
           associate = @Associate(type = Student.class, cardMin = 1, cardMax = 1), dependsOn = true)
+  @JsonIgnoreProperties("enrolments")
+  @JsonDeserialize(using = Deserializers.StudentDeserializer.class)
   private Student student;
 
   @DAttr(name = "courseModule", type = Type.Domain, length = 5, optional = false)
   @DAssoc(ascName = "module-has-enrolments", role = "enrolment",
           ascType = AssocType.One2Many, endType = AssocEndType.Many,
           associate = @Associate(type = CourseModule.class, cardMin = 1, cardMax = 1), dependsOn = true)
+  @JsonIgnoreProperties("enrolments")
+  @JsonDeserialize(using = Deserializers.CourseModuleDeserializer.class)
   private CourseModule courseModule;
 
   @DAttr(name = AttributeName_InternalMark, type = Type.Double, length = 4, optional = true, min = 0.0)

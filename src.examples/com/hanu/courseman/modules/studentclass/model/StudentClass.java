@@ -2,7 +2,10 @@ package com.hanu.courseman.modules.studentclass.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.hanu.courseman.modules.student.model.Student;
+import com.hanu.courseman.utils.Deserializers;
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.*;
 import domainapp.basics.model.meta.DAssoc.AssocEndType;
@@ -42,6 +45,8 @@ public class StudentClass implements Subscriber {
             ascType=AssocType.One2Many,endType=AssocEndType.One,
             associate=@Associate(type= Student.class,
                     cardMin=1,cardMax=25))
+    @JsonIgnoreProperties({"studentClass"})
+    @JsonDeserialize(using = Deserializers.StudentCollectionDeserializer.class)
     private Collection<Student> students;
 
     // derived attributes
@@ -241,7 +246,7 @@ public class StudentClass implements Subscriber {
         List data = changeEventSource.getObjects();
         Object srcObj = data.get(0);
 
-        System.out.println(this + ".handleEvent(" + eventType + ", " + srcObj + ")");
+//        System.out.println(this + ".handleEvent(" + eventType + ", " + srcObj + ")");
 
         if (!data.stream().anyMatch(item -> item instanceof StudentClass)) return;
 
