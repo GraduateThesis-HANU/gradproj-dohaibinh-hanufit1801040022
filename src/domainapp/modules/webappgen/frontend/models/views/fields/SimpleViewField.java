@@ -2,7 +2,7 @@ package domainapp.modules.webappgen.frontend.models.views.fields;
 
 import domainapp.basics.model.meta.DAttr;
 import domainapp.modules.common.parser.statespace.metadef.FieldDef;
-import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
+import domainapp.modules.webappgen.frontend.utils.DomainTypeRegistry;
 import domainapp.modules.webappgen.frontend.models.common.FieldDefExtensions;
 import domainapp.modules.webappgen.frontend.templates.JsTemplate;
 import domainapp.modules.webappgen.frontend.templates.JsTemplates;

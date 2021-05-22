@@ -1,5 +1,7 @@
 package com.hanu.courseman.modules.student;
 
+import com.hanu.courseman.modules.address.model.Address;
+import com.hanu.courseman.modules.enrolment.model.Enrolment;
 import com.hanu.courseman.modules.student.model.Student;
 import domainapp.basics.core.View;
 import domainapp.basics.model.meta.module.ModuleDescriptor;
@@ -7,15 +9,13 @@ import domainapp.basics.model.meta.module.ViewDesc;
 import domainapp.basics.model.meta.module.controller.ControllerDesc;
 import domainapp.basics.model.meta.module.model.ModelDesc;
 import domainapp.basics.model.meta.module.view.AttributeDesc;
-import domainapp.modules.webappgen.frontend.examples.model.Address;
-import domainapp.modules.webappgen.frontend.examples.model.Enrolment;
 
 import java.util.Collection;
 
 /**
  * @overview
  *  Module for {@link Student}s.
- *  
+ *
  * @author dmle
  */
 @ModuleDescriptor(name = "ModuleStudent",

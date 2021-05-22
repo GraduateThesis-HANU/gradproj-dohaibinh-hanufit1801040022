@@ -1,4 +1,4 @@
-package domainapp.modules.webappgen.frontend.examples.utils;
+package domainapp.modules.webappgen.frontend.utils;
 
 import org.modeshape.common.text.Inflector;
 
@@ -18,10 +18,14 @@ public final class NamingUtils {
         return toLowerCase(typeName.charAt(0)) + typeName.substring(1) + suffix;
     }
 
-    public static String classNameFrom(String pkg, Class<?> superClass, 
+    public static String classNameFrom(String pkg, Class<?> superClass,
                                        String suffix, Class<?>... classes) {
         List<String> classNames = Stream.of(classes)
             .map(c -> c.getSimpleName()).collect(Collectors.toList());
+        if (pkg.isEmpty()) {
+            return String.format("%s$%s%s", superClass.getSimpleName(),
+                    String.join("", classNames), suffix);
+        }
         return String.format("%s.%s$%s%s", pkg, superClass.getSimpleName(),
                             String.join("", classNames), suffix);
     }

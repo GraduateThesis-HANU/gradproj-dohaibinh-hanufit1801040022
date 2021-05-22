@@ -2,7 +2,7 @@ package domainapp.modules.webappgen.frontend.models.nonviews;
 
 import domainapp.modules.mccl.model.MCC;
 import domainapp.modules.webappgen.backend.utils.ClassAssocUtils;
-import domainapp.modules.webappgen.frontend.generators.utils.InheritanceUtils;
+import domainapp.modules.webappgen.frontend.utils.InheritanceUtils;
 import domainapp.modules.webappgen.frontend.models.JsFrontendElement;
 import domainapp.modules.webappgen.frontend.models.views.View;
 import domainapp.modules.webappgen.frontend.models.views.ViewFactory;

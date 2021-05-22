@@ -1,4 +1,4 @@
-package domainapp.modules.webappgen.frontend.generators.utils;
+package domainapp.modules.webappgen.frontend.utils;
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;

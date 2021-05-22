@@ -1,7 +1,6 @@
 package domainapp.modules.webappgen.frontend.bootstrap;
 
 import com.hanu.courseman.SCC1;
-import com.hanu.courseman.modules.ModuleMain;
 import com.hanu.courseman.modules.address.ModuleAddress;
 import com.hanu.courseman.modules.address.model.Address;
 import com.hanu.courseman.modules.coursemodule.ModuleCourseModule;
@@ -15,7 +14,7 @@ import com.hanu.courseman.modules.student.model.Student;
 import com.hanu.courseman.modules.studentclass.ModuleStudentClass;
 import com.hanu.courseman.modules.studentclass.model.StudentClass;
 import domainapp.modules.mccl.model.MCC;
-import domainapp.modules.webappgen.frontend.generators.utils.MCCUtils;
+import domainapp.modules.webappgen.frontend.utils.MCCUtils;
 import domainapp.modules.webappgen.frontend.models.common.MCCRegistry;
 import domainapp.modules.webappgen.frontend.models.nonviews.AppEntryPoint;
 import domainapp.modules.webappgen.frontend.models.nonviews.FrontendModule;
@@ -30,7 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public final class ViewBootstrapper {
     private static final String EXTENSION = ".js";

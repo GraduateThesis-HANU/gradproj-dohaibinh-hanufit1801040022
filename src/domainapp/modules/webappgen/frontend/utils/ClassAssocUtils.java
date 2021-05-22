@@ -1,4 +1,4 @@
-package domainapp.modules.webappgen.frontend.generators.utils;
+package domainapp.modules.webappgen.frontend.utils;
 
 import domainapp.basics.model.meta.DAssoc;
 import domainapp.basics.model.meta.DAssoc.AssocEndType;
@@ -36,7 +36,7 @@ public final class ClassAssocUtils {
             // get nested
             findNested(cls);
         }
-        return nested.get(className);  
+        return nested.get(className);
     }
 
     /**
@@ -59,7 +59,7 @@ public final class ClassAssocUtils {
             // get nested
             findAssociations(cls);
         }
-        return associations.get(className);  
+        return associations.get(className);
     }
 
     /**
@@ -76,7 +76,7 @@ public final class ClassAssocUtils {
         Field[] declaredFields = cls.getDeclaredFields();
         for (Field field : declaredFields) {
             if (field.isAnnotationPresent(dAssocType)) {
-                DAssoc assoc = field.getAnnotation(dAssocType);                
+                DAssoc assoc = field.getAnnotation(dAssocType);
                 associatedTypes.add(assoc.associate().type());
             }
         }
@@ -89,11 +89,9 @@ public final class ClassAssocUtils {
         for (Field field : declaredFields) {
             if (field.isAnnotationPresent(dAssocType)) {
                 DAssoc assoc = field.getAnnotation(dAssocType);
-                
+
                 if (assoc.ascType() == AssocType.One2Many
-                        && assoc.endType() == AssocEndType.One
-//                    || assoc.ascType() == AssocType.One2One
-                ) {
+                        && assoc.endType() == AssocEndType.One) {
                     nestedTypes.add(assoc.associate().type());
                 }
             }

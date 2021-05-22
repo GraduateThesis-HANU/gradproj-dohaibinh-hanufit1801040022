@@ -3,8 +3,8 @@ package domainapp.modules.webappgen.frontend.models.views;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import domainapp.modules.common.model.parser.ClassAST;
 import domainapp.modules.mccl.model.MCC;
-import domainapp.modules.webappgen.frontend.generators.utils.InheritanceUtils;
-import domainapp.modules.webappgen.frontend.generators.utils.MCCUtils;
+import domainapp.modules.webappgen.frontend.utils.InheritanceUtils;
+import domainapp.modules.webappgen.frontend.utils.MCCUtils;
 import domainapp.modules.webappgen.frontend.templates.JsTemplates;
 import org.modeshape.common.text.Inflector;
 

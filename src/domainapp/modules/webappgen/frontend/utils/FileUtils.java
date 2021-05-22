@@ -1,4 +1,4 @@
-package domainapp.modules.webappgen.frontend.generators.utils;
+package domainapp.modules.webappgen.frontend.utils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

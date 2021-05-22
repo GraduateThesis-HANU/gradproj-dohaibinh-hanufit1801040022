@@ -2,7 +2,7 @@ package domainapp.modules.webappgen.frontend.models.views.fields;
 
 import domainapp.basics.model.meta.DAttr;
 import domainapp.modules.common.parser.statespace.metadef.FieldDef;
-import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
+import domainapp.modules.webappgen.frontend.utils.DomainTypeRegistry;
 import domainapp.modules.webappgen.frontend.models.ViewableElement;
 import domainapp.modules.webappgen.frontend.models.common.FieldDefExtensions;
 
@@ -45,6 +45,10 @@ public abstract class ViewField implements ViewableElement, Comparable<ViewField
     public final boolean isAssociativeField() {
         return this instanceof OneManyField
                 || this instanceof AssociativeInputField;
+    }
+
+    public final boolean isOneManyField() {
+        return this instanceof OneManyField;
     }
 
     @Override

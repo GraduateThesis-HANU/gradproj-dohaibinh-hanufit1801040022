@@ -5,7 +5,7 @@ import domainapp.basics.model.meta.DAssoc;
 import domainapp.basics.model.meta.DAttr;
 import domainapp.modules.common.parser.ParserToolkit;
 import domainapp.modules.common.parser.statespace.metadef.FieldDef;
-import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
+import domainapp.modules.webappgen.frontend.utils.DomainTypeRegistry;
 
 import java.util.Collection;
 import java.util.Map;

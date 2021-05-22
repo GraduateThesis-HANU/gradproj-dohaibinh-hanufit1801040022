@@ -45,7 +45,7 @@ class ListView extends View {
 
     private Collection<String> getHeadings() {
         return getViewFields().stream()
-                .filter(viewField -> !viewField.isAssociativeField())
+                .filter(viewField -> !viewField.isOneManyField())
                 .map(viewField -> String.format("<th>%s</th>", viewField.getLabel()))
                 .collect(Collectors.toList());
     }
@@ -83,7 +83,7 @@ class ListView extends View {
 
         private Collection<String> getVisibleColumns() {
             return getViewFields().stream()
-                    .filter(viewField -> !viewField.isAssociativeField())
+                    .filter(viewField -> !viewField.isOneManyField())
                     .map(viewField -> String.format(
                             "<td style={this.verticalAlignCell} onClick={this.changeCurrent}>{this.renderObject(this.props.current.%s)}</td>",
                             viewField.getBackingField()))

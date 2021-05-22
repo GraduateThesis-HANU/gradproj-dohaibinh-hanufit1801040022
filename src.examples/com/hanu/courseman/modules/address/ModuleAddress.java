@@ -1,11 +1,12 @@
 package com.hanu.courseman.modules.address;
 
+import com.hanu.courseman.modules.address.model.Address;
+import com.hanu.courseman.modules.student.model.Student;
 import domainapp.basics.model.meta.module.ModuleDescriptor;
 import domainapp.basics.model.meta.module.ViewDesc;
 import domainapp.basics.model.meta.module.model.ModelDesc;
 import domainapp.basics.model.meta.module.view.AttributeDesc;
-import domainapp.modules.webappgen.frontend.examples.model.Address;
-import domainapp.modules.webappgen.frontend.examples.model.Student;
+
 
 @ModuleDescriptor(
         name = "ModuleAddress",

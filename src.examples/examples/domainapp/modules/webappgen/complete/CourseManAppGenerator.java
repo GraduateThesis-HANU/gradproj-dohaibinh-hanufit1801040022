@@ -1,8 +1,6 @@
 package examples.domainapp.modules.webappgen.complete;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.hanu.courseman.SCC1;
 import com.hanu.courseman.modules.ModuleMain;
@@ -28,7 +26,7 @@ import domainapp.modules.webappgen.backend.base.services.CrudService;
 import domainapp.modules.webappgen.backend.generators.GenerationMode;
 import domainapp.modules.webappgen.backend.generators.WebServiceGenerator;
 import domainapp.modules.webappgen.frontend.bootstrap.ViewBootstrapper;
-import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
+import domainapp.modules.webappgen.frontend.utils.DomainTypeRegistry;
 import domainapp.software.SoftwareFactory;
 import domainapp.softwareimpl.SoftwareImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +38,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;

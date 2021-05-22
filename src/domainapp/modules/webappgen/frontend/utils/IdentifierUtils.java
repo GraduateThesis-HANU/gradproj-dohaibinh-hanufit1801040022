@@ -1,4 +1,4 @@
-package domainapp.modules.webappgen.frontend.examples.utils;
+package domainapp.modules.webappgen.frontend.utils;
 
 import domainapp.basics.model.meta.DAttr;
 

@@ -30,6 +30,11 @@ public abstract class AssociativeInputField extends ViewField {
         this.parent = parent;
     }
 
+    @Override
+    public String getLabel() {
+        return this.detailsField.getLabel();
+    }
+
     public ViewField getIdField() {
         return this.idField;
     }

@@ -1,6 +1,6 @@
 package domainapp.modules.webappgen.frontend.templates;
 
-import domainapp.modules.webappgen.frontend.generators.utils.FileUtils;
+import domainapp.modules.webappgen.frontend.utils.FileUtils;
 
 final class TemplateReader {
 

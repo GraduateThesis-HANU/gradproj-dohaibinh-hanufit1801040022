@@ -14,8 +14,8 @@ import com.hanu.courseman.modules.student.model.Student;
 import com.hanu.courseman.modules.studentclass.ModuleStudentClass;
 import com.hanu.courseman.modules.studentclass.model.StudentClass;
 import domainapp.modules.mccl.model.MCC;
-import domainapp.modules.webappgen.frontend.generators.utils.DomainTypeRegistry;
-import domainapp.modules.webappgen.frontend.generators.utils.MCCUtils;
+import domainapp.modules.webappgen.frontend.utils.DomainTypeRegistry;
+import domainapp.modules.webappgen.frontend.utils.MCCUtils;
 import domainapp.modules.webappgen.frontend.models.common.MCCRegistry;
 
 import java.util.stream.Collectors;
