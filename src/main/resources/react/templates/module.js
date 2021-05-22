@@ -27,7 +27,8 @@ class {{ view.name.main }} extends BaseMainForm {
         ...this.state.current,
         ...this.props.current,
         type: this.getPossibleTypes.bind(this)() ? this.getPossibleTypes()[0] : undefined
-      }
+      },
+      currentId: this.props.currentId
     }
   }
   getPossibleTypes() {

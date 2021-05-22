@@ -34,6 +34,7 @@ export default class BaseMainForm extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.addToastPopup = this.addToastPopup.bind(this);
     this.getCreateHandler = this.getCreateHandler.bind(this);
+    this.getUpdateHandler = this.getUpdateHandler.bind(this);
     this.getPossibleTypes = this.getPossibleTypes.bind(this);
     this.onOperationFailed = this.onOperationFailed.bind(this);
     this.handleStateChange = this.handleStateChange.bind(this);
@@ -97,9 +98,23 @@ export default class BaseMainForm extends React.Component {
     }
   }
 
+  getUpdateHandler() {
+    const fn = this.partialApplyWithCallbacks(this.props.mainAPI.updateById);
+    console.log(this.props);
+    if (this.props.parent && this.props.parentName !== '') {
+      const parentName = this.props.parentName;
+      const parentValue = this.props.parent;
+      return function([currentId, data]) {
+        data[parentName] = parentValue;
+        return fn([currentId, data]);
+      }
+    }
+    return fn;
+  }
+
   handleSubmit() {
     const createUsing = this.getCreateHandler();
-    const updateUsing = this.partialApplyWithCallbacks(this.props.mainAPI.updateById)
+    const updateUsing = this.getUpdateHandler();
     if (this.state.viewType === "create" 
       || this.state.currentId === "" || !this.state.currentId) {
       createUsing([this.state.current]);
@@ -177,7 +192,7 @@ export default class BaseMainForm extends React.Component {
   }
   retrieveObjectById(name, id, onSuccess, onFailure) {
     if (name === "current") {
-      const className = this.constructor.name.replace("MainForm", "");
+      const className = this.constructor.name.replace("MainForm", "").replace("MainView", "");
       const propName = className.charAt(0).toLowerCase() + className.substring(1);
       return this.retrieveObjectById(propName, id, onSuccess, onFailure);
     } else {
@@ -241,7 +256,7 @@ export default class BaseMainForm extends React.Component {
           () => this.handleStateChange("viewType", result === "" ? "create" : "details")));
     } else { 
       this.handleStateChange("current", {}, false,
-          () => this.handleStateChange("viewType", "browse"));
+          () => this.handleStateChange("viewType", this.state.viewType));
     }
     // this.handleStateChange("currentId", "", true);
     this.addToastPopup((<>
@@ -318,7 +333,7 @@ export default class BaseMainForm extends React.Component {
   renderTypeDropdown() {
     const possibleTypes = this.getPossibleTypes();
     return (<>
-      {possibleTypes && this.state.viewType === "browse" ?
+      {possibleTypes && possibleTypes.length > 0 && this.state.viewType === "browse" ?
         <Form.Control as="select" value={this.state.current.type} custom defaultValue="0"
           onChange={(e) => this.filterByType(e.currentTarget.value)}>
           <option value="0">&lt;--- choose a type ---&gt;</option>

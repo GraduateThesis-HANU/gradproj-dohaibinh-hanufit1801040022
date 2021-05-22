@@ -52,7 +52,15 @@ public enum JsTemplates implements JsTemplate {
     SELECT_OPTION {
         @Override
         public String getAsString() {
-            return null;
+            return "<FormGroup>\n" +
+                    "  <Form.Label>{{ fieldLabel }}</Form.Label>\n" +
+                    "  <FormControl as=\"select\"" +
+                    " value={this.renderObject(\"current.{{ backingField }}\")}" +
+                    " onChange={(e) => this.props.handleStateChange(\"current.{{ backingField }}\", e.target.value, {{ needApiCall }})} custom  >\n" +
+                    "    <option value='' disabled selected>&lt;Please choose one&gt;</option>" +
+                    "    {{ options }}" +
+                    "  </FormControl>" +
+                    "</FormGroup>";
         }
     },
     CHECKBOX {
@@ -73,7 +81,8 @@ public enum JsTemplates implements JsTemplate {
                     "  viewType={this.props.viewType}\n" +
                     "  title=\"{{ classNameHumanReadable }}\"\n" +
                     "  current={this.props.current.{{ backingField }}}\n" +
-                    "  parentName=''\tparent={this.props.current}\n" +
+                    "  currentId={this.props.current.{{ detailsBackingField }}?.{{ idBackingField }}}\n" +
+                    "  parentName='{{ parentClassNameCamelCase }}' parent={this.props.current}\n" +
                     "  parentId={this.props.currentId}\n" +
                     "  parentAPI={this.props.mainAPI}\n" +
                     "  partialApplyWithCallbacks={this.partialApplyWithCallbacks}\n" +
@@ -91,7 +100,7 @@ public enum JsTemplates implements JsTemplate {
                     "  viewType={this.props.viewType}\n" +
                     "  title=\"{{ classNameHumanReadable }}\"\n" +
                     "  current={this.props.current.{{ backingField }}}\n" +
-                    "  parentName='student' parent={this.state.current}\n" +
+                    "  parentName='{{ classNameCamelCase }}' parent='{{ classNameCamelCase }}'\n" +
                     "  parentId={this.props.currentId}\n" +
                     "  parentAPI={this.props.mainAPI}\n" +
                     "  partialApplyWithCallbacks={this.partialApplyWithCallbacks} /></>}";

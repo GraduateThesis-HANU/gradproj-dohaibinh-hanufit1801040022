@@ -12,6 +12,7 @@ import domainapp.modules.webappgen.frontend.models.ViewableElement;
 import domainapp.modules.webappgen.frontend.models.common.FieldDefExtensions;
 import domainapp.modules.webappgen.frontend.models.common.MCCExtensions;
 import domainapp.modules.webappgen.frontend.models.common.MCCRegistry;
+import domainapp.modules.webappgen.frontend.models.views.fields.AssociativeInputField;
 import domainapp.modules.webappgen.frontend.models.views.fields.ViewField;
 import domainapp.modules.webappgen.frontend.models.views.fields.ViewFieldFactory;
 import domainapp.modules.webappgen.frontend.templates.JsTemplate;
@@ -27,6 +28,7 @@ public abstract class View implements ViewableElement {
     private final JsTemplate template;
     private final Collection<String> referredViews = new HashSet<>();
     private final Collection<ViewField> viewFields = new ArrayList<>();
+    private final String classNameLowerCamel;
 
     private static String escapeQuotes(String str) {
         return str.replace("\"", "").replace("'", "");
@@ -35,11 +37,13 @@ public abstract class View implements ViewableElement {
     protected View(JsTemplate template, String title) {
         this.template = template;
         this.title = escapeQuotes(title);
+        this.classNameLowerCamel = "";
     }
 
     protected View(MCC viewDesc, JsTemplate template, boolean discardNonMccFields) {
         this.template = template;
         this.title = escapeQuotes(createTitle(viewDesc));
+        this.classNameLowerCamel = inflector.lowerCamelCase(viewDesc.getDomainClass().getName());
         // init view fields
         Collection<FieldDeclaration> fields = viewDesc.getViewFields();
         Collection<FieldDeclaration> domainFields = viewDesc.getDomainClass().getDomainFields();
@@ -58,6 +62,7 @@ public abstract class View implements ViewableElement {
     public View(ClassOrInterfaceDeclaration dClass, JsTemplate template) {
         this.template = template;
         this.title = escapeQuotes(createTitle(dClass));
+        this.classNameLowerCamel = inflector.lowerCamelCase(dClass.getNameAsString());
         // init view fields
         Collection<FieldDeclaration> domainFields =
                 ParserToolkit.getDomainFields(dClass);
@@ -75,6 +80,7 @@ public abstract class View implements ViewableElement {
             JsTemplate template) {
         this.template = template;
         this.title = "";
+        this.classNameLowerCamel = inflector.lowerCamelCase(className);
         // init view fields
 
         this.viewFields.addAll(generateViewFields(
@@ -123,7 +129,7 @@ public abstract class View implements ViewableElement {
     }
 
     // lookup fields: fields that are not of the same kind as the 1st param
-    private static ViewField viewFieldFromFieldDeclaration(
+    private ViewField viewFieldFromFieldDeclaration(
             final FieldDeclaration domainOrViewField,
             final Collection<FieldDeclaration> lookupFields,
             final boolean firstParamIsDomainField) {
@@ -181,11 +187,13 @@ public abstract class View implements ViewableElement {
                         .filter(pair -> pair.getNameAsString().equals("label"))
                         .findFirst().get().getValue().toString())
                 .findFirst().orElse("id");
-        return ViewFieldFactory.create(domainFieldDef, idFieldDef,
+        AssociativeInputField field = (AssociativeInputField) ViewFieldFactory.create(domainFieldDef, idFieldDef,
                 idLabel, association.get("ascType"));
+        field.setParent(this.classNameLowerCamel);
+        return field;
     }
 
-    private static Collection<ViewField> generateViewFields(
+    private Collection<ViewField> generateViewFields(
             Collection<FieldDeclaration> domainFields,
             Collection<FieldDeclaration> viewFields,
             boolean discardNonMccFields

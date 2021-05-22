@@ -7,6 +7,7 @@ public abstract class AssociativeInputField extends ViewField {
     private static final Inflector inflector = Inflector.getInstance();
     private final ViewField idField;
     private final ViewField detailsField;
+    private String parent;
 
     public AssociativeInputField(FieldDef fieldDef, FieldDef idFieldDef, String idFieldLabel) {
         super(fieldDef);
@@ -23,6 +24,10 @@ public abstract class AssociativeInputField extends ViewField {
         ((SimpleViewField)this.getIdField()).setDisabled(false);
         ((SimpleViewField)this.getIdField()).setNeedApiCall(true);
         ((SimpleViewField)this.getDetailsField()).setDisabled(true);
+    }
+
+    public void setParent(String parent) {
+        this.parent = parent;
     }
 
     public ViewField getIdField() {
@@ -43,10 +48,13 @@ public abstract class AssociativeInputField extends ViewField {
         return getTemplate().getAsString()
                 .replace("{{ idField }}",
                         removeUnnecessaryFormGroup(this.getIdField().getAsString()))
+                .replace("{{ idBackingField }}", idField.getFieldDef().getName())
+                .replace("{{ detailsBackingField }}", detailsField.getFieldDef().getName())
                 .replace("{{ detailsField }}",
                         removeUnnecessaryFormGroup(this.getDetailsField().getAsString()))
                 .replace("{{ classNameCamelCase }}",
                         inflector.lowerCamelCase(this.detailsField.getFieldDef().getType()
-                                .asClassOrInterfaceType().getNameAsString()));
+                                .asClassOrInterfaceType().getNameAsString()))
+                .replace("{{ parentClassNameCamelCase }}", this.parent);
     }
 }

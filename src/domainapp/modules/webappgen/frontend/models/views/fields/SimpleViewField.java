@@ -9,6 +9,8 @@ import domainapp.modules.webappgen.frontend.templates.JsTemplates;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class SimpleViewField extends ViewField {
     private final String label;
@@ -51,24 +53,24 @@ class SimpleViewField extends ViewField {
 
     private String getInputType() {
         final DAttr.Type type = FieldDefExtensions.getDomainType(getFieldDef()).get();
-        if (type.isString() || type.isDomainType()) return "text";
+        if (type.isDomainReferenceType()
+                && FieldDefExtensions.isPrimitiveOrEnumType(getFieldDef())) {
+            return "select";
+        } else if (type.isString() || type.isDomainType()) return "text";
         else if (type.isDate()) return "date";
         else if (type.isNumeric()) return "number";
         else if (type.isColor()) return "color";
         else if (type.isBoolean()) return "checkbox";
-        else if (type.isDomainReferenceType()
-                && FieldDefExtensions.isPrimitiveOrEnumType(getFieldDef())) {
-            return "select";
-        } else {
+        else {
             throw new IllegalStateException("Unsupported input type: " + type);
         }
     }
 
     @Override
     public JsTemplate getTemplate() {
-        if (FieldDefExtensions.isPrimitiveOrEnumType(getFieldDef())) {
-            return JsTemplates.SIMPLE_VIEW_FIELD;
-        }
+//        if (FieldDefExtensions.isPrimitiveOrEnumType(getFieldDef())) {
+//            return JsTemplates.SIMPLE_VIEW_FIELD;
+//        }
         String type = getInputType();
         switch (type) {
             case "select":
@@ -76,6 +78,9 @@ class SimpleViewField extends ViewField {
             case "checkbox":
                 return JsTemplates.CHECKBOX;
             case "text":
+            case "date":
+            case "color":
+            case "number":
                 return JsTemplates.SIMPLE_VIEW_FIELD;
         }
         throw new IllegalStateException("Unsupported input type: " + type);
@@ -103,6 +108,17 @@ class SimpleViewField extends ViewField {
                 .replace("{{ fieldType }}", getInputType())
                 .replace("{{ backingField }}", getBackingField())
                 .replace("{{ disabledFlag }}", this.isDisabled() ? "disabled" : "")
-                .replace("{{ needApiCall }}", Boolean.toString(this.needApiCall));
+                .replace("{{ needApiCall }}", Boolean.toString(this.needApiCall))
+                .replace("{{ options }}", getInputType().equals("select") ?
+                        String.join("\n",
+                                Stream.of(DomainTypeRegistry.getInstance()
+                                    .getDomainTypeByName(
+                                        getFieldDef().getType()
+                                            .asClassOrInterfaceType()
+                                            .getNameAsString()).getEnumConstants())
+                                    .map(s -> String.format(
+                                            "<option value='%s'>%s</option>",s, s))
+                                    .collect(Collectors.toList()))
+                        : "");
     }
 }
