@@ -29,19 +29,14 @@ import domainapp.modules.webappgen.frontend.bootstrap.ViewBootstrapper;
 import domainapp.modules.webappgen.frontend.utils.DomainTypeRegistry;
 import domainapp.software.SoftwareFactory;
 import domainapp.softwareimpl.SoftwareImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -79,8 +74,8 @@ public class CourseManAppGenerator {
 
     private static final String backendTargetPackage = "com.hanu.courseman.backend";
     private static final String backendOutputPath = "src.examples";
-//    private static final String frontendOutputPath = "src.examples/com/hanu/courseman/frontend";
-    private static final String frontendOutputPath = "/Users/binh_dh/vscode/courseman-examples-2/src";
+    private static final String frontendOutputPath = "src.examples/com/hanu/courseman/frontend";
+//    private static final String frontendOutputPath = "/Users/binh_dh/vscode/courseman-examples-2/src";
 
     public static void main(String[] args) {
         FrontendGenerator.setupAndGen();
@@ -197,28 +192,6 @@ public class CourseManAppGenerator {
                     .modules(new ParameterNamesModule())
                     .serializationInclusion(JsonInclude.Include.NON_NULL);
             //.configure(mapper);
-        }
-
-        @RestController
-        public static class xxx {
-            @Autowired
-            private RequestMappingHandlerMapping requestMappingHandlerMapping;
-            @RequestMapping( value = "/endpoints", method = RequestMethod.GET )
-            public Object getEndPointsInView()
-            {
-                return requestMappingHandlerMapping.getHandlerMethods().keySet();
-            }
-        }
-
-        @ControllerAdvice
-        public class ControllerConfig {
-
-            @ExceptionHandler
-            @ResponseStatus(HttpStatus.BAD_REQUEST)
-            public void handle(HttpMessageNotReadableException e) {
-                System.err.println("Returning HTTP 400 Bad Request: " + e);
-                throw e;
-            }
         }
     }
 }

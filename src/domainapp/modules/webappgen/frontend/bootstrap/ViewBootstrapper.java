@@ -74,6 +74,14 @@ public final class ViewBootstrapper {
     }
 
     private void saveFile(String folder, String fileName, String content) {
+        Path path = new File(projectSrcDir).toPath();
+        if (!Files.exists(path)) {
+            try {
+                Files.createDirectory(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         Path dir = new File(projectSrcDir).toPath().resolve("./" + folder);
         if (!Files.exists(dir)) {
             try {
