@@ -66,6 +66,7 @@ class FormView extends View implements HasSubView {
 
     @Override
     public String getAsString() {
+        Inflector inflector = Inflector.getInstance();
         return getTemplate().getAsString()
                 .replace("{{ view.name.form }}", backingClass.concat("Form"))
                 .replace("{{ view.title }}", getTitle())
@@ -73,7 +74,9 @@ class FormView extends View implements HasSubView {
                 .replace("{{ view.submodule.imports }}",
                         this.getReferredViews().stream()
                                 .map(view -> String.format("import %s from \"./%s\";", view, view))
-                                .reduce("", (s1, s2) -> s1 + "\n" + s2));
+                                .reduce("", (s1, s2) -> s1 + "\n" + s2))
+                .replace("{{ classNameCamelCase }}",
+                        inflector.pluralize(inflector.underscore(backingClass))).replace("_", "-");
     }
 
     @Override

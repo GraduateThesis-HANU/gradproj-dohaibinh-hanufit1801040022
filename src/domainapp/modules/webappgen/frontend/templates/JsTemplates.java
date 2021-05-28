@@ -100,6 +100,7 @@ public enum JsTemplates implements JsTemplate {
                     "  viewType={this.props.viewType}\n" +
                     "  title=\"{{ classNameHumanReadable }}\"\n" +
                     "  current={this.props.current.{{ backingField }}}\n" +
+                    "  thisNamePlural='{{ thisNamePlural }}'" +
                     "  parentName='{{ classNameCamelCase }}' parent='{{ classNameCamelCase }}'\n" +
                     "  parentId={this.props.currentId}\n" +
                     "  parentAPI={this.props.mainAPI}\n" +

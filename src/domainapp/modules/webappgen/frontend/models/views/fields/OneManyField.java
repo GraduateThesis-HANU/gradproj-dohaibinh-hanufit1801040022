@@ -44,7 +44,7 @@ class OneManyField extends ViewField {
                 .get(0)
                 .asClassOrInterfaceType().getNameAsString();
         return getTemplate().getAsString()
-                .replace("{{ classNameCamelCase }}", inflector.lowerCamelCase(fieldTypeName))
+                .replace("{{ thisNamePlural }}", inflector.lowerCamelCase(inflector.pluralize(inflector.underscore(fieldTypeName))))
                 .replace("{{ submodule }}", fieldTypeName.concat("Submodule"))
                 .replace("{{ classNameHumanReadable }}",
                         "Form: " + inflector.capitalize(

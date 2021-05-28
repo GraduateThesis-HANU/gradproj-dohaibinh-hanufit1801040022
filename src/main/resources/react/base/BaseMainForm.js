@@ -56,7 +56,7 @@ export default class BaseMainForm extends React.Component {
         endpoint: `/topic/${this.props.mainAPI.objectNamePlural}`,
         callback: (response) => {
           const message = JSON.parse(response.body).content;
-          self.addToastPopup(message, "light", () => window.location.reload());
+          // self.addToastPopup(message, "light", () => window.location.reload());
         }
       }
     ]);
@@ -185,7 +185,7 @@ export default class BaseMainForm extends React.Component {
     if (typeof (obj) === "object") {
       return Object.keys(obj)
         .map(key => obj[key])
-        .reduce((k1, k2) => "" + k1 + "-" + k2);
+        .reduce((k1, k2) => "" + k1 + "|" + k2);
     } else {
       return obj;
     }
@@ -194,6 +194,10 @@ export default class BaseMainForm extends React.Component {
     if (name === "current") {
       const className = this.constructor.name.replace("MainForm", "").replace("MainView", "");
       const propName = className.charAt(0).toLowerCase() + className.substring(1);
+      if (this.props.parent) {
+        return this.props.parentAPI.getAllInner([
+          this.props.thisNamePlural, this.props.parentId, onSuccess, onFailure]);
+      }
       return this.retrieveObjectById(propName, id, onSuccess, onFailure);
     } else {
       const actualName = name.replace(".id", "").replace("current.", "");
@@ -255,7 +259,7 @@ export default class BaseMainForm extends React.Component {
         () => this.handleStateChange("currentId", result === "" ? "" : result.id, false, 
           () => this.handleStateChange("viewType", result === "" ? "create" : "details")));
     } else { 
-      this.handleStateChange("current", {}, false,
+      this.handleStateChange("currentId", "", true,
           () => this.handleStateChange("viewType", this.state.viewType));
     }
     // this.handleStateChange("currentId", "", true);

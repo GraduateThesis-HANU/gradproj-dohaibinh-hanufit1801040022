@@ -32,9 +32,10 @@ export default class BaseListItemView extends React.Component {
       return "";
     }
     if (typeof (obj) === "object") {
+      // return JSON.stringify(obj);
       return Object.keys(obj)
         .map(key => obj[key])
-        .reduce((k1, k2) => "" + k1 + "-" + k2);
+        .reduce((k1, k2) => "" + k1 + " | " + k2);
     } else {
       return obj;
     }

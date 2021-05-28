@@ -53,7 +53,7 @@ public abstract class AssociativeInputField extends ViewField {
         return getTemplate().getAsString()
                 .replace("{{ idField }}",
                         removeUnnecessaryFormGroup(this.getIdField().getAsString()))
-                .replace("{{ idBackingField }}", idField.getFieldDef().getName())
+                .replace("{{ idBackingField }}", idField.getBackingField())
                 .replace("{{ detailsBackingField }}", detailsField.getFieldDef().getName())
                 .replace("{{ detailsField }}",
                         removeUnnecessaryFormGroup(this.getDetailsField().getAsString()))
