@@ -56,7 +56,7 @@ public class WebServiceGenerator {
         for (Class<?> cls : classes) {
             if (ignored.contains(cls)) continue;
 //            cls = annotationGenerator.generateCircularAnnotations(cls, classes);
-            cls = annotationGenerator.generateInheritanceAnnotations(cls);
+//            cls = annotationGenerator.generateInheritanceAnnotations(cls);
 
             tempClass = serviceTypeGenerator.generateAutowiredServiceType(cls);
             generatedServiceClasses.put(cls.getCanonicalName(), tempClass);
