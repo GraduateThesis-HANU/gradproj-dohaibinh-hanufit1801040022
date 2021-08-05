@@ -1,6 +1,8 @@
 package com.hanu.courseman.modules.coursemodule.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+
 import domainapp.basics.exceptions.ConstraintViolationException;
 import domainapp.basics.model.meta.AttrRef;
 import domainapp.basics.model.meta.DClass;
@@ -12,6 +14,7 @@ import domainapp.basics.model.meta.DOpt;
  * @author dmle
  *
  */
+@JsonTypeName("compulsory")
 @DClass(schema="courseman")
 public class CompulsoryModule extends CourseModule {
 

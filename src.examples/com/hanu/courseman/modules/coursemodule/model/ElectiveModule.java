@@ -1,6 +1,8 @@
 package com.hanu.courseman.modules.coursemodule.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+
 import domainapp.basics.model.meta.AttrRef;
 import domainapp.basics.model.meta.DAttr;
 import domainapp.basics.model.meta.DAttr.Type;
@@ -12,6 +14,7 @@ import domainapp.basics.model.meta.DOpt;
  * @author dmle
  *
  */
+@JsonTypeName("elective")
 @DClass(schema="courseman")
 public class ElectiveModule extends CourseModule {
   // extra attribute of elective module

@@ -11,6 +11,10 @@ import domainapp.basics.util.Tuple;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+
 /**
  * Represents a course module. The module id is auto-incremented from a base
  * calculated by "M" + semester-value * 100.
@@ -18,6 +22,12 @@ import java.util.Map;
  * @author dmle
  * @version 2.0
  */
+// include jackson annotations
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, 
+include = As.PROPERTY, property = "type") @JsonSubTypes({
+	@JsonSubTypes.Type(value = CompulsoryModule.class, name = "compulsory"),
+	@JsonSubTypes.Type(value = ElectiveModule.class, name = "elective")
+})
 @DClass(schema="courseman")
 public abstract class CourseModule {
 
