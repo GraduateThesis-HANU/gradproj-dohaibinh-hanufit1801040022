@@ -27,7 +27,7 @@ export default class BaseMainForm extends React.Component {
     this.renderTopButtons = this.renderTopButtons.bind(this);
     this.renderObject = this.renderObject.bind(this);
     this._renderObject = this._renderObject.bind(this);
-    
+
     this.setAlert = this.setAlert.bind(this);
     this.resetState = this.resetState.bind(this);
     this.filterByType = this.filterByType.bind(this);
@@ -72,7 +72,7 @@ export default class BaseMainForm extends React.Component {
         this.setState({ current: result })}
     ]);
   }
-  
+
   resetState() {
     this.setState({
       current: {
@@ -81,7 +81,7 @@ export default class BaseMainForm extends React.Component {
       currentId: undefined
     })
   }
-  
+
   getCreateHandler() {
     if (this.props.parent && this.props.parentName !== '') {
       const fn = this.partialApplyWithCallbacks(this.props.parentAPI.createInner);
@@ -115,7 +115,7 @@ export default class BaseMainForm extends React.Component {
   handleSubmit() {
     const createUsing = this.getCreateHandler();
     const updateUsing = this.getUpdateHandler();
-    if (this.state.viewType === "create" 
+    if (this.state.viewType === "create"
       || this.state.currentId === "" || !this.state.currentId) {
       createUsing([this.state.current]);
     } else if (this.state.viewType === "details" || this.props.mode === "submodule") {
@@ -132,7 +132,7 @@ export default class BaseMainForm extends React.Component {
     } else {
       newState[stateName] = newValue;
     }
-    
+
     if (needsApiCall) {
       const stateObjName = stateName.replace("Id", "");
       if (stateObjName.includes("current.")) {
@@ -194,7 +194,7 @@ export default class BaseMainForm extends React.Component {
     if (name === "current") {
       const className = this.constructor.name.replace("MainForm", "").replace("MainView", "");
       const propName = className.charAt(0).toLowerCase() + className.substring(1);
-      if (this.props.parent) {
+      if (this.props.parent && (!id || id === "")) {
         return this.props.parentAPI.getAllInner([
           this.props.thisNamePlural, this.props.parentId, onSuccess, onFailure]);
       }
@@ -216,7 +216,7 @@ export default class BaseMainForm extends React.Component {
       function () {
         this.handleStateChange("currentId", this.state.currentId, true,
           function () {
-            if (this.state.currentId && this.state.current !== {} 
+            if (this.state.currentId && this.state.current !== {}
                 && !(this.state.current instanceof Array)) {
               this.handleStateChange("viewType", "details");
             } else {
@@ -256,9 +256,9 @@ export default class BaseMainForm extends React.Component {
     // update UI somewhere here
     if (result) { // if not void
       this.handleStateChange("current", result === "" ? {} : result, false,
-        () => this.handleStateChange("currentId", result === "" ? "" : result.id, false, 
+        () => this.handleStateChange("currentId", result === "" ? "" : result.id, false,
           () => this.handleStateChange("viewType", result === "" ? "create" : "details")));
-    } else { 
+    } else {
       this.handleStateChange("currentId", "", true,
           () => this.handleStateChange("viewType", this.state.viewType));
     }
@@ -312,7 +312,7 @@ export default class BaseMainForm extends React.Component {
             () => this.handleStateChange("current.type", "0"))}>Browse</Button>
         {this.state.viewType === "details"
           && this.state.currentId
-          && this.state.current !== "" ? 
+          && this.state.current !== "" ?
           <DeleteConfirmation action={
             () => this.partialApplyWithCallbacks(this.props.mainAPI.deleteById)([this.state.currentId])} /> : ""}
       </Col>
@@ -374,7 +374,7 @@ export default class BaseMainForm extends React.Component {
     return (<>
       <Container className="border py-4">
         {this.state.alert ? this.state.alert : ""}
-        {this.state.notifications && this.state.notifications.length > 0 ? 
+        {this.state.notifications && this.state.notifications.length > 0 ?
           <ToastWrapper>{this.state.notifications}</ToastWrapper> : ""}
         {this.props.compact === true ? "" :
           <>

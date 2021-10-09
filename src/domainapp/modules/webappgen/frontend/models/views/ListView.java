@@ -46,7 +46,13 @@ class ListView extends View {
     private Collection<String> getHeadings() {
         return getViewFields().stream()
                 .filter(viewField -> !viewField.isOneManyField())
-                .map(viewField -> String.format("<th>%s</th>", viewField.getLabel()))
+                .map(viewField -> {
+                    if (viewField.isAssociativeField()) {
+                        return String.format("{!(this.props.excludes?.includes('%s')) && <th>%s</th>}",
+                                viewField.getBackingField(), viewField.getLabel());
+                    }
+                    return String.format("<th>%s</th>", viewField.getLabel());
+                })
                 .collect(Collectors.toList());
     }
 
@@ -84,9 +90,17 @@ class ListView extends View {
         private Collection<String> getVisibleColumns() {
             return getViewFields().stream()
                     .filter(viewField -> !viewField.isOneManyField())
-                    .map(viewField -> String.format(
-                            "<td style={this.verticalAlignCell} onClick={this.changeCurrent}>{this.renderObject(this.props.current.%s)}</td>",
-                            viewField.getBackingField()))
+                    .map(viewField -> {
+                        if (viewField.isAssociativeField()) {
+                            return String.format(
+                                    "{!(this.props.excludes?.includes('%s')) && <td style={this.verticalAlignCell} onClick={this.changeCurrent}>{this.renderObject(this.props.current.%s)}</td>}",
+                                    viewField.getBackingField(),
+                                    viewField.getBackingField());
+                        }
+                        return String.format(
+                                "<td style={this.verticalAlignCell} onClick={this.changeCurrent}>{this.renderObject(this.props.current.%s)}</td>",
+                                viewField.getBackingField());
+                    })
                     .collect(Collectors.toList());
         }
 

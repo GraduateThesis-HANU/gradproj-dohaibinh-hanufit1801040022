@@ -16,7 +16,7 @@ export default class {{ view.name.list }} extends BaseListView {
         return (<>
           {
             current.map((item, index) =>
-            <{{ view.name.listItem }} key={item.id} current={item}
+            <{{ view.name.listItem }} {...this.props} key={item.id} current={item}
               index={index + 1} currentId={item.id}
               changeToDetailsView={this.props.changeToDetailsView}
               handleStateChange={this.props.handleStateChange}
